@@ -1,0 +1,66 @@
+[
+  {
+    "deviceName": "Viz.ai Contact",
+    "manufacturer": "Viz.ai Inc.",
+    "submissionNumber": "DEN200071",
+    "decisionDate": "2021-02-12",
+    "clearancePathway": "De Novo",
+    "specialty": "Radiology"
+  },
+  {
+    "deviceName": "IDx-DR",
+    "manufacturer": "Digital Diagnostics Inc.",
+    "submissionNumber": "DEN180001",
+    "decisionDate": "2018-04-11",
+    "clearancePathway": "De Novo",
+    "specialty": "Ophthalmic"
+  },
+  {
+    "deviceName": "Caption AI",
+    "manufacturer": "Caption Health Inc.",
+    "submissionNumber": "DEN200043",
+    "decisionDate": "2021-02-11",
+    "clearancePathway": "De Novo",
+    "specialty": "Cardiovascular"
+  },
+  {
+    "deviceName": "Brainomix e-Stroke Suite",
+    "manufacturer": "Brainomix Limited",
+    "submissionNumber": "K201369",
+    "decisionDate": "2021-06-25",
+    "clearancePathway": "510(k)",
+    "specialty": "Radiology"
+  },
+  {
+    "deviceName": "Aidoc BriefCase",
+    "manufacturer": "Aidoc Medical Ltd.",
+    "submissionNumber": "K193375",
+    "decisionDate": "2020-02-19",
+    "clearancePathway": "510(k)",
+    "specialty": "Radiology"
+  },
+  {
+    "deviceName": "Zebra Medical Vision HealthPNX",
+    "manufacturer": "Zebra Medical Vision Ltd.",
+    "submissionNumber": "K201501",
+    "decisionDate": "2020-11-24",
+    "clearancePathway": "510(k)",
+    "specialty": "Radiology"
+  },
+  {
+    "deviceName": "Arterys Cardio AI",
+    "manufacturer": "Arterys Inc.",
+    "submissionNumber": "K163253",
+    "decisionDate": "2017-01-06",
+    "clearancePathway": "510(k)",
+    "specialty": "Cardiovascular"
+  },
+  {
+    "deviceName": "Dragon Medical One",
+    "manufacturer": "Nuance Communications Inc.",
+    "submissionNumber": "N/A",
+    "decisionDate": "N/A",
+    "clearancePathway": "N/A",
+    "specialty": "Clinical Documentation"
+  }
+]

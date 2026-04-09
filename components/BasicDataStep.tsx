@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { NHS_COLOURS } from "../lib/constants";
 import type { BasicData } from "../lib/types";
+import type { LookupResults } from "../lib/lookup";
+import ToolIntelligence from "./ToolIntelligence";
 import {
   TOOL_CATEGORIES,
   DEVICE_CLASSES,
@@ -16,12 +18,18 @@ interface BasicDataStepProps {
   initialData: BasicData;
   onNext: (data: BasicData) => void;
   onBack: () => void;
+  lookupResults: LookupResults | null;
+  lookupLoading: boolean;
+  lookupError?: string;
 }
 
 export default function BasicDataStep({
   initialData,
   onNext,
   onBack,
+  lookupResults,
+  lookupLoading,
+  lookupError,
 }: BasicDataStepProps) {
   const [data, setData] = useState<BasicData>(initialData);
   const [otherUser, setOtherUser] = useState("");
@@ -97,6 +105,20 @@ export default function BasicDataStep({
             className="w-full px-3 py-2 rounded border text-sm"
             style={{ borderColor: NHS_COLOURS.grey }}
             placeholder="e.g. Dragon Copilot"
+          />
+          <p
+            className="text-xs mt-1"
+            style={{ color: NHS_COLOURS.secondaryText }}
+          >
+            After entering the tool name, we will automatically search public
+            databases for regulatory and evidence information.
+          </p>
+
+          {/* Tool Intelligence panel — appears below tool name */}
+          <ToolIntelligence
+            results={lookupResults}
+            loading={lookupLoading}
+            error={lookupError}
           />
         </div>
 
@@ -436,7 +458,7 @@ export default function BasicDataStep({
                 complexity scores applied to several dimensions (human oversight,
                 validation, and monitoring). Without this information, the
                 framework cannot calculate accurate scoring floors and the
-                assessment would be unreliable. Please consult the tool&apos;s
+                assessment would be unreliable. Please consult the tool's
                 technical documentation or development team before proceeding.
               </p>
             </div>

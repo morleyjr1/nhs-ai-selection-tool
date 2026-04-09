@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { Score, BasicData, SubTriggerAnswers } from "../lib/types";
 import type { AssessmentResult } from "../lib/classify";
+import type { LookupResults } from "../lib/lookup";
+import { runLookup } from "../lib/lookup";
 import { complexityDimensions, readinessDimensions } from "../lib/dimensions";
 import { computeFloors, applyFloor } from "../lib/floors";
 import { getSubTriggerVisibility } from "../lib/hardgates";
@@ -58,6 +60,68 @@ export default function SelectionTool() {
   const [rUnknowns, setRUnknowns] = useState<Record<string, boolean>>(
     Object.fromEntries(readinessDimensions.map((d) => [d.id, false])),
   );
+
+  // ── Tool Intelligence lookup state ──
+  const [lookupResults, setLookupResults] = useState<LookupResults | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | undefined>(undefined);
+  const lookupCacheRef = useRef<Record<string, LookupResults>>({});
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLookedUpRef = useRef<string>("");
+
+  // ── Debounced tool name lookup ──
+  // Triggers 800ms after the user stops typing. Caches results per tool name
+  // so re-entering a name does not re-fetch.
+  useEffect(() => {
+    const toolName = basicData.toolName.trim();
+
+    // Clear pending debounce on every keystroke
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    // Don't search for very short names
+    if (toolName.length < 3) {
+      // If results are showing for a previous name, clear them
+      if (lookupResults && toolName.length === 0) {
+        setLookupResults(null);
+        setLookupError(undefined);
+      }
+      return;
+    }
+
+    // Already looked up this exact name — skip
+    if (toolName === lastLookedUpRef.current) return;
+
+    // Check cache first
+    if (lookupCacheRef.current[toolName]) {
+      setLookupResults(lookupCacheRef.current[toolName]);
+      setLookupLoading(false);
+      setLookupError(undefined);
+      lastLookedUpRef.current = toolName;
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      lastLookedUpRef.current = toolName;
+      setLookupLoading(true);
+      setLookupError(undefined);
+
+      try {
+        const results = await runLookup(toolName, basicData.developer);
+        lookupCacheRef.current[toolName] = results;
+        setLookupResults(results);
+      } catch (e) {
+        setLookupError(
+          e instanceof Error ? e.message : "Lookup failed — please try again.",
+        );
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 800);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [basicData.toolName, basicData.developer, lookupResults]);
 
   // ── Derived: scoring floors ──
   const floors =
@@ -182,12 +246,13 @@ export default function SelectionTool() {
 
   function handleExport() {
     if (!assessment) return;
-    // Include justifications and fired flags in export
+    // Include justifications, fired flags, and lookup results in export
     const exportData = {
       ...assessment,
       justifications: { ...cJustifications, ...rJustifications },
       firedFlags,
       basicData,
+      toolIntelligence: lookupResults,
     };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: "application/json",
@@ -282,6 +347,9 @@ export default function SelectionTool() {
             initialData={basicData}
             onNext={handleBasicDataNext}
             onBack={() => setStep(0)}
+            lookupResults={lookupResults}
+            lookupLoading={lookupLoading}
+            lookupError={lookupError}
           />
         )}
 
