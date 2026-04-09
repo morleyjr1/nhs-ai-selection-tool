@@ -51,7 +51,7 @@ export default function ToolIntelligence({
                 }}
               />
               <p className="text-sm" style={{ color: NHS_COLOURS.secondaryText }}>
-                Searching public databases...
+                Searching public databases (FDA, PubMed, ClinicalTrials.gov, NICE, EUDAMED)...
               </p>
             </div>
           )}
@@ -88,6 +88,144 @@ export default function ToolIntelligence({
                         {m.decisionDate} | {m.specialty}
                       </p>
                     ))}
+                  </div>
+                )}
+
+                {/* EUDAMED */}
+                <StatusRow
+                  label="EUDAMED (EU)"
+                  status={results.eudamed?.status ?? "not_found"}
+                  foundText={`${results.eudamed?.count ?? 0} device${(results.eudamed?.count ?? 0) !== 1 ? "s" : ""} registered`}
+                  notFoundText="Not found in EUDAMED"
+                  errorText={
+                    results.eudamed?.status === "manual_check"
+                      ? "Could not query automatically — check manually"
+                      : results.eudamed?.error
+                  }
+                />
+                {results.eudamed?.results && results.eudamed.results.length > 0 && (
+                  <div className="ml-6 mt-1 space-y-1.5">
+                    {results.eudamed.results.slice(0, 5).map((d, i) => (
+                      <div key={`${d.basicUdiDi}-${i}`}>
+                        <a
+                          href={d.eudamedUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline"
+                          style={{ color: NHS_COLOURS.blue }}
+                        >
+                          {d.tradeName}
+                        </a>
+                        <p
+                          className="text-xs"
+                          style={{ color: NHS_COLOURS.grey }}
+                        >
+                          {d.manufacturer}
+                          {d.riskClass && ` | Risk class: ${d.riskClass}`}
+                          {d.deviceStatusType && ` | ${d.deviceStatusType}`}
+                          {d.authorisedRepName && (
+                            <span> | AR: {d.authorisedRepName}</span>
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                    {results.eudamed.searchUrl && (
+                      <a
+                        href={results.eudamed.searchUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs underline block mt-1"
+                        style={{ color: NHS_COLOURS.blue }}
+                      >
+                        View all results on EUDAMED
+                      </a>
+                    )}
+                  </div>
+                )}
+                {results.eudamed?.status === "manual_check" && results.eudamed.searchUrl && (
+                  <div className="ml-6 mt-1">
+                    <a
+                      href={results.eudamed.searchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs underline"
+                      style={{ color: NHS_COLOURS.blue }}
+                    >
+                      Search EUDAMED manually
+                    </a>
+                  </div>
+                )}
+              </Section>
+
+              {/* ── NICE Guidance ── */}
+              <Section title="NICE Guidance">
+                <StatusRow
+                  label="NICE"
+                  status={
+                    results.nice?.status === "manual_check"
+                      ? "error"
+                      : results.nice?.status ?? "not_found"
+                  }
+                  foundText={`${results.nice?.count ?? 0} guidance document${(results.nice?.count ?? 0) !== 1 ? "s" : ""} found`}
+                  notFoundText="No NICE guidance found for this product"
+                  errorText={
+                    results.nice?.status === "manual_check"
+                      ? "Could not query automatically — check manually"
+                      : results.nice?.error
+                  }
+                />
+                {results.nice?.results && results.nice.results.length > 0 && (
+                  <div className="ml-6 mt-1 space-y-2">
+                    {results.nice.results.slice(0, 5).map((g, i) => (
+                      <div key={`${g.guidanceRef}-${i}`}>
+                        <div className="flex items-center gap-1.5">
+                          {g.guidanceType && (
+                            <span
+                              className="px-1.5 py-0.5 rounded text-white font-semibold"
+                              style={{
+                                backgroundColor: niceTypeColour(g.guidanceType),
+                                fontSize: "9px",
+                              }}
+                            >
+                              {g.guidanceType}
+                            </span>
+                          )}
+                          <a
+                            href={g.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs underline"
+                            style={{ color: NHS_COLOURS.blue }}
+                          >
+                            {g.title}
+                          </a>
+                        </div>
+                        {(g.snippet || g.publicationDate) && (
+                          <p
+                            className="text-xs mt-0.5"
+                            style={{ color: NHS_COLOURS.grey }}
+                          >
+                            {g.guidanceRef && `${g.guidanceRef} `}
+                            {g.publicationDate && `| ${g.publicationDate} `}
+                            {g.snippet && `— ${g.snippet.slice(0, 120)}${g.snippet.length > 120 ? "..." : ""}`}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Always show manual search link */}
+                {results.nice?.searchUrl && (
+                  <div className="ml-6 mt-1">
+                    <a
+                      href={results.nice.searchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs underline"
+                      style={{ color: NHS_COLOURS.blue }}
+                    >
+                      Search NICE directly
+                    </a>
                   </div>
                 )}
               </Section>
@@ -348,4 +486,18 @@ function StatusRow({
       </div>
     </div>
   );
+}
+
+// ── NICE type badge colours ──
+
+function niceTypeColour(guidanceType: string): string {
+  const t = guidanceType.toLowerCase();
+  if (t.includes("technology appraisal")) return "#5A2D82"; // purple
+  if (t.includes("medtech") || t.includes("mib")) return NHS_COLOURS.blue;
+  if (t.includes("diagnostics")) return "#007F3B"; // green
+  if (t.includes("medical technologies")) return "#41B6E6"; // light blue
+  if (t.includes("interventional")) return "#ED8B00"; // orange
+  if (t.includes("guideline") || t.includes("clinical")) return "#330072"; // dark purple
+  if (t.includes("quality standard")) return "#003087"; // dark blue
+  return NHS_COLOURS.darkBlue; // default
 }

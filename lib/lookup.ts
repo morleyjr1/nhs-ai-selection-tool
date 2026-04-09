@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // Tool Intelligence lookup — orchestration layer.
 //
-// Queries: FDA (static), PubMed, ClinicalTrials.gov, Brave Web Search.
-// Also generates smart links for NICE, MHRA PARD, and MHRA alerts.
+// Queries: FDA (static), PubMed, ClinicalTrials.gov, Brave Web Search,
+//          NICE guidance, EUDAMED (EU device registry).
+// Also generates smart links for MHRA PARD, MHRA alerts, NHS England.
 // ---------------------------------------------------------------------------
 
 // ── Result types ──
@@ -44,6 +45,27 @@ export interface WebResult {
   isGovUK: boolean;
 }
 
+export interface NICEResult {
+  title: string;
+  url: string;
+  guidanceType: string;
+  guidanceRef: string;
+  publicationDate: string;
+  snippet: string;
+}
+
+export interface EUDAMEDDevice {
+  tradeName: string;
+  manufacturer: string;
+  manufacturerSrn: string;
+  riskClass: string;
+  deviceStatusType: string;
+  basicUdiDi: string;
+  primaryDi: string;
+  authorisedRepName: string;
+  eudamedUrl: string;
+}
+
 export interface SmartLink {
   label: string;
   url: string;
@@ -58,6 +80,8 @@ export interface LookupResults {
   pubmed: { status: "found" | "not_found" | "error"; count: number; results: PubMedResult[]; error?: string };
   trials: { status: "found" | "not_found" | "error"; total: number; completed: number; recruiting: number; ukBased: number; results: TrialResult[]; error?: string };
   web: { status: "found" | "not_found" | "error" | "no_api_key"; results: WebResult[]; error?: string };
+  nice: { status: "found" | "not_found" | "manual_check" | "error"; count: number; results: NICEResult[]; searchUrl: string; error?: string };
+  eudamed: { status: "found" | "not_found" | "manual_check" | "error"; count: number; results: EUDAMEDDevice[]; searchUrl: string; error?: string };
   smartLinks: SmartLink[];
 }
 
@@ -79,19 +103,13 @@ function searchFDA(toolName: string): FDAMatch[] {
   });
 }
 
-// ── Smart links for NICE, MHRA ──
+// ── Smart links for MHRA, NHS England ──
+// (NICE now has its own API lookup, so removed from smart links)
 
 function buildSmartLinks(toolName: string, manufacturer?: string): SmartLink[] {
   const encoded = encodeURIComponent(toolName);
-  const mfrEncoded = manufacturer ? encodeURIComponent(manufacturer) : encoded;
 
   return [
-    {
-      label: "NICE guidance search",
-      url: `https://www.nice.org.uk/search?q=${encoded}`,
-      description:
-        "Search NICE for guidance, Medtech Innovation Briefings, or Evidence Standards Framework assessments.",
-    },
     {
       label: "MHRA device registration (PARD)",
       url: `https://pard.mhra.gov.uk/`,
@@ -123,7 +141,7 @@ function buildSmartLinks(toolName: string, manufacturer?: string): SmartLink[] {
 
 /**
  * Run all lookups for a given tool name. FDA is synchronous (static data);
- * PubMed, ClinicalTrials, and Brave are fetched via API routes.
+ * PubMed, ClinicalTrials, Brave, NICE, and EUDAMED are fetched via API routes.
  */
 export async function runLookup(
   toolName: string,
@@ -136,6 +154,8 @@ export async function runLookup(
     pubmed: { status: "not_found", count: 0, results: [] },
     trials: { status: "not_found", total: 0, completed: 0, recruiting: 0, ukBased: 0, results: [] },
     web: { status: "not_found", results: [] },
+    nice: { status: "not_found", count: 0, results: [], searchUrl: "" },
+    eudamed: { status: "not_found", count: 0, results: [], searchUrl: "" },
     smartLinks: buildSmartLinks(toolName, manufacturer),
   };
 
@@ -156,11 +176,13 @@ export async function runLookup(
     ? `${toolName} ${manufacturer}`
     : toolName;
 
-  // PubMed, ClinicalTrials, Brave — run in parallel via API routes
-  const [pubmedRes, trialsRes, webRes] = await Promise.allSettled([
+  // PubMed, ClinicalTrials, Brave, NICE, EUDAMED — run in parallel via API routes
+  const [pubmedRes, trialsRes, webRes, niceRes, eudamedRes] = await Promise.allSettled([
     fetch(`/api/lookup/pubmed?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
     fetch(`/api/lookup/trials?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
     fetch(`/api/lookup/web?q=${encodeURIComponent(toolName)}${manufacturer ? `&mfr=${encodeURIComponent(manufacturer)}` : ""}`).then((r) => r.json()),
+    fetch(`/api/lookup/nice?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
+    fetch(`/api/lookup/eudamed?q=${encodeURIComponent(toolName)}${manufacturer ? `&mfr=${encodeURIComponent(manufacturer)}` : ""}`).then((r) => r.json()),
   ]);
 
   if (pubmedRes.status === "fulfilled") {
@@ -179,6 +201,30 @@ export async function runLookup(
     results.web = webRes.value;
   } else {
     results.web = { status: "error", results: [], error: "Request failed" };
+  }
+
+  if (niceRes.status === "fulfilled") {
+    results.nice = niceRes.value;
+  } else {
+    results.nice = {
+      status: "error",
+      count: 0,
+      results: [],
+      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(specificQuery)}`,
+      error: "Request failed",
+    };
+  }
+
+  if (eudamedRes.status === "fulfilled") {
+    results.eudamed = eudamedRes.value;
+  } else {
+    results.eudamed = {
+      status: "error",
+      count: 0,
+      results: [],
+      searchUrl: `https://ec.europa.eu/tools/eudamed/#/screen/search-device`,
+      error: "Request failed",
+    };
   }
 
   return results;
