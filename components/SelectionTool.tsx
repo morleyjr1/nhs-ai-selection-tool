@@ -71,11 +71,27 @@ export default function SelectionTool() {
   const [lookupError, setLookupError] = useState<string | undefined>(undefined);
   const lookupCacheRef = useRef<Record<string, LookupResults>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastLookedUpRef = useRef<string>("");
+  const lastLookupKeyRef = useRef<string>("");
 
-  // ── Debounced tool name lookup ──
+  // ── Real-time lookup fields (updated by BasicDataStep callback) ──
+  const [lookupToolName, setLookupToolName] = useState(basicData.toolName);
+  const [lookupManufacturer, setLookupManufacturer] = useState(
+    basicData.manufacturerName ?? "",
+  );
+
+  /** Called by BasicDataStep whenever tool name or manufacturer changes */
+  function handleLookupFieldsChange(
+    toolName: string,
+    manufacturerName?: string,
+  ) {
+    setLookupToolName(toolName);
+    setLookupManufacturer(manufacturerName ?? "");
+  }
+
+  // ── Debounced lookup — triggers on real-time field changes ──
   useEffect(() => {
-    const toolName = basicData.toolName.trim();
+    const toolName = lookupToolName.trim();
+    const manufacturer = lookupManufacturer.trim();
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -87,24 +103,29 @@ export default function SelectionTool() {
       return;
     }
 
-    if (toolName === lastLookedUpRef.current) return;
+    // Cache key includes manufacturer so changing manufacturer re-triggers
+    const cacheKey = `${toolName}||${manufacturer}`;
+    if (cacheKey === lastLookupKeyRef.current) return;
 
-    if (lookupCacheRef.current[toolName]) {
-      setLookupResults(lookupCacheRef.current[toolName]);
+    if (lookupCacheRef.current[cacheKey]) {
+      setLookupResults(lookupCacheRef.current[cacheKey]);
       setLookupLoading(false);
       setLookupError(undefined);
-      lastLookedUpRef.current = toolName;
+      lastLookupKeyRef.current = cacheKey;
       return;
     }
 
     debounceRef.current = setTimeout(async () => {
-      lastLookedUpRef.current = toolName;
+      lastLookupKeyRef.current = cacheKey;
       setLookupLoading(true);
       setLookupError(undefined);
 
       try {
-        const results = await runLookup(toolName, basicData.developer);
-        lookupCacheRef.current[toolName] = results;
+        const results = await runLookup(
+          toolName,
+          manufacturer || undefined,
+        );
+        lookupCacheRef.current[cacheKey] = results;
         setLookupResults(results);
       } catch (e) {
         setLookupError(
@@ -118,7 +139,7 @@ export default function SelectionTool() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [basicData.toolName, basicData.developer, lookupResults]);
+  }, [lookupToolName, lookupManufacturer, lookupResults]);
 
   // ── Derived: scoring floors ──
   const floors =
@@ -346,6 +367,7 @@ export default function SelectionTool() {
             lookupResults={lookupResults}
             lookupLoading={lookupLoading}
             lookupError={lookupError}
+            onLookupFieldsChange={handleLookupFieldsChange}
           />
         )}
 

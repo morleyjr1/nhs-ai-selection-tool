@@ -21,6 +21,8 @@ interface BasicDataStepProps {
   lookupResults: LookupResults | null;
   lookupLoading: boolean;
   lookupError?: string;
+  /** Called whenever the tool name or manufacturer name changes — drives real-time lookup */
+  onLookupFieldsChange?: (toolName: string, manufacturerName?: string) => void;
 }
 
 export default function BasicDataStep({
@@ -30,6 +32,7 @@ export default function BasicDataStep({
   lookupResults,
   lookupLoading,
   lookupError,
+  onLookupFieldsChange,
 }: BasicDataStepProps) {
   const [data, setData] = useState<BasicData>(initialData);
   const [otherUser, setOtherUser] = useState("");
@@ -48,7 +51,22 @@ export default function BasicDataStep({
     !regulatoryBlocked;
 
   function update<K extends keyof BasicData>(field: K, value: BasicData[K]) {
-    setData((prev) => ({ ...prev, [field]: value }));
+    setData((prev) => {
+      const next = { ...prev, [field]: value };
+      // Notify parent of lookup-relevant field changes in real time
+      if (
+        (field === "toolName" || field === "manufacturerName") &&
+        onLookupFieldsChange
+      ) {
+        onLookupFieldsChange(
+          field === "toolName" ? (value as string) : next.toolName,
+          field === "manufacturerName"
+            ? (value as string)
+            : next.manufacturerName,
+        );
+      }
+      return next;
+    });
   }
 
   function toggleUser(user: string) {
@@ -108,15 +126,60 @@ export default function BasicDataStep({
             style={{ borderColor: NHS_COLOURS.grey }}
             placeholder="e.g. Dragon Copilot"
           />
+        </div>
+
+        {/* Q1b: Manufacturer / developer name */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-1"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            Q1b. Manufacturer or developer name
+          </label>
+          <input
+            type="text"
+            value={data.manufacturerName ?? ""}
+            onChange={(e) => update("manufacturerName", e.target.value)}
+            className="w-full px-3 py-2 rounded border text-sm"
+            style={{ borderColor: NHS_COLOURS.grey }}
+            placeholder="e.g. Microsoft / Nuance"
+          />
           <p
             className="text-xs mt-1"
+            style={{ color: NHS_COLOURS.secondaryText }}
+          >
+            Adding the manufacturer name helps narrow down search results,
+            particularly for tools with generic names.
+          </p>
+        </div>
+
+        {/* Q1c: Product URL */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-1"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            Q1c. Product URL
+          </label>
+          <input
+            type="url"
+            value={data.productUrl ?? ""}
+            onChange={(e) => update("productUrl", e.target.value)}
+            className="w-full px-3 py-2 rounded border text-sm"
+            style={{ borderColor: NHS_COLOURS.grey }}
+            placeholder="e.g. https://healthairegister.com/radiology/products/kheiron-mia"
+          />
+        </div>
+
+        {/* Tool Intelligence panel — appears below tool identification fields */}
+        <div>
+          <p
+            className="text-xs mb-2"
             style={{ color: NHS_COLOURS.secondaryText }}
           >
             We will automatically search public databases (FDA, PubMed,
             ClinicalTrials.gov) for this tool. This may take a moment.
           </p>
-
-          {/* Tool Intelligence panel — appears below tool name */}
           <ToolIntelligence
             results={lookupResults}
             loading={lookupLoading}

@@ -35,6 +35,8 @@ export type Determinism = 1 | 2 | 3;
 
 export interface BasicData {
   toolName: string;
+  manufacturerName?: string;
+  productUrl?: string;
   toolPurpose?: string;
   toolProblem?: string;
   orgName?: string;

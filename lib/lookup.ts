@@ -150,10 +150,16 @@ export async function runLookup(
     results.fda = { status: "error", matches: [], error: String(e) };
   }
 
+  // Build a more specific query when manufacturer is known.
+  // "MIA" alone is too generic; "MIA Kheiron" is specific enough.
+  const specificQuery = manufacturer
+    ? `${toolName} ${manufacturer}`
+    : toolName;
+
   // PubMed, ClinicalTrials, Brave — run in parallel via API routes
   const [pubmedRes, trialsRes, webRes] = await Promise.allSettled([
-    fetch(`/api/lookup/pubmed?q=${encodeURIComponent(toolName)}`).then((r) => r.json()),
-    fetch(`/api/lookup/trials?q=${encodeURIComponent(toolName)}`).then((r) => r.json()),
+    fetch(`/api/lookup/pubmed?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
+    fetch(`/api/lookup/trials?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
     fetch(`/api/lookup/web?q=${encodeURIComponent(toolName)}${manufacturer ? `&mfr=${encodeURIComponent(manufacturer)}` : ""}`).then((r) => r.json()),
   ]);
 
