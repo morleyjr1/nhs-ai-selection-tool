@@ -1,6 +1,17 @@
 // ---------------------------------------------------------------------------
 // PubMed lookup via NCBI E-utilities.
 // GET /api/lookup/pubmed?q=Dragon+Copilot
+//
+// Search strategy (in order of specificity):
+//   1. Phrase search restricted to Title/Abstract: "query"[Title/Abstract]
+//   2. Phrase search unrestricted: "query"
+//   3. Unquoted broad search with Title/Abstract restriction: query[Title/Abstract]
+//
+// The [Title/Abstract] field tag is critical for product names like "Heidi"
+// that would otherwise match author first names and return irrelevant
+// results. PubMed treats bare terms as matching across ALL fields including
+// author names; restricting to Title/Abstract ensures we find articles
+// *about* the product, not *by* someone who happens to share the name.
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,41 +29,37 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Step 1: Search for PMIDs
-    // Wrap in quotes for phrase search, then also try as a broader fallback.
-    // PubMed phrase search: "Hippocratic AI" will only match that exact string.
-    // If phrase search returns nothing, fall back to unquoted.
-    const phraseTerm = `"${q}"`;
-    const searchParams = new URLSearchParams({
-      db: "pubmed",
-      term: phraseTerm,
-      retmax: "10",
-      sort: "relevance",
-      retmode: "json",
-    });
+    // Build search terms in order of specificity.
+    // We try the most restrictive search first and fall back progressively.
+    const searchTerms = [
+      // 1. Exact phrase in title/abstract only
+      `"${q}"[Title/Abstract]`,
+      // 2. Exact phrase anywhere (may still match MeSH, keywords, etc.)
+      `"${q}"`,
+      // 3. Broad search but restricted to title/abstract
+      `${q}[Title/Abstract]`,
+    ];
 
-    const searchRes = await fetch(`${ESEARCH_URL}?${searchParams}`);
-    if (!searchRes.ok) throw new Error(`PubMed esearch failed: ${searchRes.status}`);
-    const searchData = await searchRes.json();
+    let idList: string[] = [];
+    let totalCount = 0;
 
-    let idList: string[] = searchData?.esearchresult?.idlist ?? [];
-    let totalCount = parseInt(searchData?.esearchresult?.count ?? "0", 10);
-
-    // If phrase search returned nothing, retry with unquoted (broader) search
-    if (idList.length === 0) {
-      const fallbackParams = new URLSearchParams({
+    for (const term of searchTerms) {
+      const searchParams = new URLSearchParams({
         db: "pubmed",
-        term: q,
+        term: term,
         retmax: "10",
         sort: "relevance",
         retmode: "json",
       });
-      const fallbackRes = await fetch(`${ESEARCH_URL}?${fallbackParams}`);
-      if (fallbackRes.ok) {
-        const fallbackData = await fallbackRes.json();
-        idList = fallbackData?.esearchresult?.idlist ?? [];
-        totalCount = parseInt(fallbackData?.esearchresult?.count ?? "0", 10);
-      }
+
+      const searchRes = await fetch(`${ESEARCH_URL}?${searchParams}`);
+      if (!searchRes.ok) continue;
+
+      const searchData = await searchRes.json();
+      idList = searchData?.esearchresult?.idlist ?? [];
+      totalCount = parseInt(searchData?.esearchresult?.count ?? "0", 10);
+
+      if (idList.length > 0) break;
     }
 
     if (idList.length === 0) {

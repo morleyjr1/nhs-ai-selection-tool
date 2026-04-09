@@ -2,29 +2,22 @@
 // NICE guidance lookup.
 // GET /api/lookup/nice?q=Brainomix+e-Stroke
 //
-// Queries the NICE website search endpoint, which returns JSON with guidance
-// results. No API key required for the public search — the syndication API
-// (api.nice.org.uk) needs a licence, but the public search is open.
+// Strategy: NICE's public website is a React SPA that loads search results
+// client-side via JavaScript, so server-side fetching of nice.org.uk/search
+// returns only the shell HTML with no actual results. Instead, we use the
+// NICE search API that powers the website internally.
 //
-// Falls back gracefully: if the search endpoint changes shape or blocks
-// server-side requests, returns a "manual_check" status with a direct URL.
+// The NICE website calls:
+//   https://www.nice.org.uk/api/search?q=...
+// This returns JSON with document results. No API key is required.
+//
+// Falls back to manual_check with a direct URL if the API changes.
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
 
-const NICE_SEARCH_URL = "https://www.nice.org.uk/search";
-
-// NICE guidance programme codes relevant to health AI / medtech
-const RELEVANT_PROGRAMMES = new Set([
-  "ta",   // Technology Appraisals
-  "hst",  // Highly Specialised Technologies
-  "dg",   // Diagnostics Guidance
-  "mtg",  // Medical Technologies Guidance
-  "mib",  // Medtech Innovation Briefings
-  "ipg",  // Interventional Procedures Guidance
-  "ng",   // NICE Guidelines (occasionally relevant)
-  "qs",   // Quality Standards
-]);
+// The internal API endpoint that the NICE website SPA uses
+const NICE_API_URL = "https://www.nice.org.uk/api/search";
 
 interface NICEResult {
   title: string;
@@ -44,55 +37,67 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  try {
-    // NICE website search accepts a JSON response when asked via Accept header
-    // or via the /api/search endpoint. Try the public search URL with JSON.
-    const searchUrl = `${NICE_SEARCH_URL}?q=${encodeURIComponent(q)}&ps=20&om=[{"gst":["Published"]}]`;
+  const searchUrl = `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`;
 
-    const res = await fetch(searchUrl, {
+  try {
+    // Query the NICE internal search API.
+    // Parameters observed from the NICE website:
+    //   q  = search query
+    //   ps = page size
+    //   sp = start page (0-indexed)
+    //   om = order/filter as JSON (optional)
+    const apiUrl = `${NICE_API_URL}?q=${encodeURIComponent(q)}&ps=25`;
+
+    const res = await fetch(apiUrl, {
       headers: {
-        Accept: "application/json, text/html",
+        Accept: "application/json",
         "User-Agent": "NHS-AI-Adoption-Tool/1.0 (academic research)",
       },
       signal: AbortSignal.timeout(10000),
     });
 
-    // If NICE returns HTML rather than JSON (which it may), try parsing
-    // the structured data from the response
-    const contentType = res.headers.get("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      // Direct JSON response — parse NICE search results
-      const data = await res.json();
-      return handleNICEJson(data, q);
+    if (!res.ok) {
+      throw new Error(`NICE API returned ${res.status}`);
     }
 
-    // HTML response — try to extract search results from the page
-    const html = await res.text();
-    return handleNICEHtml(html, q);
+    const contentType = res.headers.get("content-type") || "";
+
+    if (!contentType.includes("json")) {
+      // If NICE doesn't return JSON, fall back to manual check
+      throw new Error("NICE API did not return JSON");
+    }
+
+    const data = await res.json();
+    return parseNICEResponse(data, q, searchUrl);
 
   } catch (e) {
     console.error("NICE lookup error:", e);
+
     // Graceful fallback — always give the user a manual search link
     return NextResponse.json({
       status: "manual_check",
       count: 0,
       results: [],
-      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
+      searchUrl,
       error: "Unable to query NICE automatically. Use the direct link to search manually.",
     });
   }
 }
 
-function handleNICEJson(data: Record<string, unknown>, q: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseNICEResponse(data: any, q: string, searchUrl: string) {
   try {
-    // The NICE search API returns results in different shapes depending
-    // on version. Handle the common patterns.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const documents: any[] =
-      (data as any)?.documents ??
-      (data as any)?.results ??
-      (data as any)?.searchResults ??
+    // The NICE API response structure varies but common shapes are:
+    //   { documents: [...], ... }
+    //   { results: [...], ... }
+    //   { searchResults: { documents: [...] }, ... }
+    // Each document typically has: title, pathAndQuery, guidanceRef,
+    // niceDocType, teaser/summary, publicationDate, etc.
+    const documents: unknown[] =
+      data?.documents ??
+      data?.results ??
+      data?.searchResults?.documents ??
+      data?.searchResults ??
       [];
 
     if (!Array.isArray(documents) || documents.length === 0) {
@@ -100,94 +105,92 @@ function handleNICEJson(data: Record<string, unknown>, q: string) {
         status: "not_found",
         count: 0,
         results: [],
-        searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
+        searchUrl,
       });
     }
 
+    // Filter for actual guidance documents (not navigation pages, corporate
+    // pages, or generic "how to use NICE" pages).
     const results: NICEResult[] = documents
-      .filter((doc) => {
-        // Prefer guidance documents over corporate pages
-        const ref = (doc.guidanceRef ?? doc.pathAndQuery ?? doc.id ?? "").toLowerCase();
-        return RELEVANT_PROGRAMMES.has(ref.split(/\d/)[0]) || doc.guidanceType;
+      .filter((doc: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d = doc as any;
+        const title = (d.title ?? d.Title ?? "").toLowerCase();
+        const path = (d.pathAndQuery ?? d.url ?? d.id ?? "").toLowerCase();
+
+        // Exclude navigation/meta pages
+        const excludePatterns = [
+          "category to find",
+          "list organised by",
+          "about nice",
+          "our programmes",
+          "get involved",
+          "jobs at nice",
+          "nice website",
+          "contact us",
+          "accessibility",
+          "terms and conditions",
+          "syndication",
+          "/about/",
+          "/process/",
+          "/standards-and-indicators/",
+        ];
+        if (excludePatterns.some((p) => title.includes(p) || path.includes(p))) {
+          return false;
+        }
+
+        // Prefer paths that look like guidance references
+        if (path.includes("/guidance/")) return true;
+
+        // Accept if it has a guidance type or reference
+        if (d.guidanceRef || d.niceDocType || d.guidanceType) return true;
+
+        // Accept if the title looks substantive (more than 5 words,
+        // not a navigation label)
+        const wordCount = title.split(/\s+/).length;
+        return wordCount > 5;
       })
       .slice(0, 10)
-      .map((doc) => ({
-        title: doc.title ?? doc.Title ?? "Untitled",
-        url: doc.url ?? doc.pathAndQuery
-          ? `https://www.nice.org.uk${doc.pathAndQuery}`
-          : `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
-        guidanceType: doc.guidanceType ?? doc.niceDocType ?? classifyRef(doc.guidanceRef ?? ""),
-        guidanceRef: doc.guidanceRef ?? doc.id ?? "",
-        publicationDate: doc.publicationDate ?? doc.lastUpdated ?? "",
-        snippet: doc.teaser ?? doc.summary ?? doc.metaDescription ?? "",
-      }));
+      .map((doc: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d = doc as any;
+        const path = d.pathAndQuery ?? "";
+        const ref = extractGuidanceRef(path);
+        return {
+          title: d.title ?? d.Title ?? "Untitled",
+          url: path.startsWith("http")
+            ? path
+            : path
+              ? `https://www.nice.org.uk${path}`
+              : searchUrl,
+          guidanceType:
+            d.guidanceType ?? d.niceDocType ?? (ref ? classifyRef(ref) : ""),
+          guidanceRef: d.guidanceRef ?? ref ?? "",
+          publicationDate: d.publicationDate ?? d.lastUpdated ?? "",
+          snippet: d.teaser ?? d.summary ?? d.metaDescription ?? "",
+        };
+      });
 
     return NextResponse.json({
       status: results.length > 0 ? "found" : "not_found",
       count: results.length,
       results,
-      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
+      searchUrl,
     });
   } catch {
     return NextResponse.json({
       status: "not_found",
       count: 0,
       results: [],
-      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
+      searchUrl,
     });
   }
 }
 
-function handleNICEHtml(html: string, q: string) {
-  try {
-    // Parse search results from NICE HTML. The NICE search page renders
-    // results in a fairly consistent structure. We extract titles and URLs
-    // using regex (no DOM parser needed on the server).
-    const results: NICEResult[] = [];
-
-    // NICE search results are in <a> tags with class containing "results"
-    // Pattern: <a href="/guidance/MTG..." class="...">Title</a>
-    const linkPattern = /<a[^>]*href="(\/guidance\/[^"]+)"[^>]*>([^<]+)<\/a>/gi;
-    let match;
-
-    while ((match = linkPattern.exec(html)) !== null && results.length < 10) {
-      const path = match[1];
-      const title = match[2].trim();
-      const ref = path.replace("/guidance/", "");
-      const guidanceType = classifyRef(ref);
-
-      results.push({
-        title,
-        url: `https://www.nice.org.uk${path}`,
-        guidanceType,
-        guidanceRef: ref,
-        publicationDate: "",
-        snippet: "",
-      });
-    }
-
-    // Deduplicate by URL
-    const seen = new Set<string>();
-    const unique = results.filter((r) => {
-      if (seen.has(r.url)) return false;
-      seen.add(r.url);
-      return true;
-    });
-
-    return NextResponse.json({
-      status: unique.length > 0 ? "found" : "not_found",
-      count: unique.length,
-      results: unique,
-      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
-    });
-  } catch {
-    return NextResponse.json({
-      status: "manual_check",
-      count: 0,
-      results: [],
-      searchUrl: `https://www.nice.org.uk/search?q=${encodeURIComponent(q)}`,
-    });
-  }
+function extractGuidanceRef(path: string): string {
+  // Extract guidance reference from paths like /guidance/TA123 or /guidance/mib45
+  const match = path.match(/\/guidance\/([\w]+\d+)/i);
+  return match ? match[1] : "";
 }
 
 function classifyRef(ref: string): string {
