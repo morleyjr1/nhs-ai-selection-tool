@@ -45,6 +45,14 @@ export default function DimensionCard({
           >
             {dimension.id} — {dimension.longLabel}
           </h3>
+          {dimension.whatThisDimensionAssesses && (
+            <p
+              className="text-sm mt-1"
+              style={{ color: NHS_COLOURS.secondaryText }}
+            >
+              {dimension.whatThisDimensionAssesses}
+            </p>
+          )}
         </div>
         {floor > 0 && (
           <span
@@ -60,15 +68,31 @@ export default function DimensionCard({
         )}
       </div>
 
-      {/* Guiding question */}
+      {/* Guiding questions */}
       <div className="mb-4">
-        <p
-          className="text-sm mb-1 italic"
-          style={{ color: NHS_COLOURS.secondaryText }}
-        >
-          {dimension.guidingQuestion}
-        </p>
+        {dimension.guidingQuestions.map((q, i) => (
+          <p
+            key={i}
+            className="text-sm mb-1 italic"
+            style={{ color: NHS_COLOURS.secondaryText }}
+          >
+            {q}
+          </p>
+        ))}
       </div>
+
+      {/* Scoring note */}
+      {dimension.scoringNote && (
+        <p
+          className="text-xs mb-3 px-3 py-2 rounded"
+          style={{
+            backgroundColor: NHS_COLOURS.lightGrey,
+            color: NHS_COLOURS.secondaryText,
+          }}
+        >
+          {dimension.scoringNote}
+        </p>
+      )}
 
       {/* Score buttons */}
       <div className="flex gap-2 mb-3">
@@ -179,12 +203,20 @@ export default function DimensionCard({
           <p className="text-sm" style={{ color: NHS_COLOURS.secondaryText }}>
             {dimension.whyItMatters}
           </p>
-          {dimension.conditionalNote && (
+          {dimension.dimensionNote && (
             <p
               className="text-xs mt-2 italic"
               style={{ color: NHS_COLOURS.grey }}
             >
-              Note: {dimension.conditionalNote.text}
+              Note: {dimension.dimensionNote}
+            </p>
+          )}
+          {dimension.routingNote && (
+            <p
+              className="text-xs mt-1 italic"
+              style={{ color: NHS_COLOURS.grey }}
+            >
+              {dimension.routingNote}
             </p>
           )}
         </div>
