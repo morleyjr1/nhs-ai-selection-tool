@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LookupResults } from "../lib/lookup";
+import type { LookupResults, SmartLink } from "../lib/lookup";
 import { NHS_COLOURS } from "../lib/constants";
 
 interface ToolIntelligenceProps {
@@ -18,6 +18,10 @@ export default function ToolIntelligence({
   const [expanded, setExpanded] = useState(true);
 
   if (!results && !loading && !error) return null;
+
+  // Separate prominent links (NICE, EUDAMED) from standard smart links
+  const prominentLinks = results?.smartLinks.filter((l) => l.prominent) ?? [];
+  const standardLinks = results?.smartLinks.filter((l) => !l.prominent) ?? [];
 
   return (
     <div
@@ -51,7 +55,7 @@ export default function ToolIntelligence({
                 }}
               />
               <p className="text-sm" style={{ color: NHS_COLOURS.secondaryText }}>
-                Searching public databases (FDA, PubMed, ClinicalTrials.gov, NICE, EUDAMED)...
+                Searching public databases (FDA, PubMed, ClinicalTrials.gov)...
               </p>
             </div>
           )}
@@ -91,144 +95,24 @@ export default function ToolIntelligence({
                   </div>
                 )}
 
-                {/* EUDAMED */}
-                <StatusRow
-                  label="EUDAMED (EU)"
-                  status={results.eudamed?.status ?? "not_found"}
-                  foundText={`${results.eudamed?.count ?? 0} device${(results.eudamed?.count ?? 0) !== 1 ? "s" : ""} registered`}
-                  notFoundText="Not found in EUDAMED"
-                  errorText={
-                    results.eudamed?.status === "manual_check"
-                      ? "Could not query automatically — check manually"
-                      : results.eudamed?.error
-                  }
-                />
-                {results.eudamed?.results && results.eudamed.results.length > 0 && (
-                  <div className="ml-6 mt-1 space-y-1.5">
-                    {results.eudamed.results.slice(0, 5).map((d, i) => (
-                      <div key={`${d.basicUdiDi}-${i}`}>
-                        <a
-                          href={d.eudamedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs underline"
-                          style={{ color: NHS_COLOURS.blue }}
-                        >
-                          {d.tradeName}
-                        </a>
-                        <p
-                          className="text-xs"
-                          style={{ color: NHS_COLOURS.grey }}
-                        >
-                          {d.manufacturer}
-                          {d.riskClass && ` | Risk class: ${d.riskClass}`}
-                          {d.deviceStatusType && ` | ${d.deviceStatusType}`}
-                          {d.authorisedRepName && (
-                            <span> | AR: {d.authorisedRepName}</span>
-                          )}
-                        </p>
-                      </div>
-                    ))}
-                    {results.eudamed.searchUrl && (
-                      <a
-                        href={results.eudamed.searchUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs underline block mt-1"
-                        style={{ color: NHS_COLOURS.blue }}
-                      >
-                        View all results on EUDAMED
-                      </a>
-                    )}
-                  </div>
-                )}
-                {results.eudamed?.status === "manual_check" && results.eudamed.searchUrl && (
-                  <div className="ml-6 mt-1">
-                    <a
-                      href={results.eudamed.searchUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline"
-                      style={{ color: NHS_COLOURS.blue }}
-                    >
-                      Search EUDAMED manually
-                    </a>
-                  </div>
-                )}
+                {/* EUDAMED prominent link */}
+                {prominentLinks
+                  .filter((l) => l.category === "regulatory")
+                  .map((link) => (
+                    <ProminentLink key={link.label} link={link} />
+                  ))}
               </Section>
 
               {/* ── NICE Guidance ── */}
-              <Section title="NICE Guidance">
-                <StatusRow
-                  label="NICE"
-                  status={
-                    results.nice?.status === "manual_check"
-                      ? "error"
-                      : results.nice?.status ?? "not_found"
-                  }
-                  foundText={`${results.nice?.count ?? 0} guidance document${(results.nice?.count ?? 0) !== 1 ? "s" : ""} found`}
-                  notFoundText="No NICE guidance found for this product"
-                  errorText={
-                    results.nice?.status === "manual_check"
-                      ? "Could not query automatically — check manually"
-                      : results.nice?.error
-                  }
-                />
-                {results.nice?.results && results.nice.results.length > 0 && (
-                  <div className="ml-6 mt-1 space-y-2">
-                    {results.nice.results.slice(0, 5).map((g, i) => (
-                      <div key={`${g.guidanceRef}-${i}`}>
-                        <div className="flex items-center gap-1.5">
-                          {g.guidanceType && (
-                            <span
-                              className="px-1.5 py-0.5 rounded text-white font-semibold"
-                              style={{
-                                backgroundColor: niceTypeColour(g.guidanceType),
-                                fontSize: "9px",
-                              }}
-                            >
-                              {g.guidanceType}
-                            </span>
-                          )}
-                          <a
-                            href={g.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs underline"
-                            style={{ color: NHS_COLOURS.blue }}
-                          >
-                            {g.title}
-                          </a>
-                        </div>
-                        {(g.snippet || g.publicationDate) && (
-                          <p
-                            className="text-xs mt-0.5"
-                            style={{ color: NHS_COLOURS.grey }}
-                          >
-                            {g.guidanceRef && `${g.guidanceRef} `}
-                            {g.publicationDate && `| ${g.publicationDate} `}
-                            {g.snippet && `— ${g.snippet.slice(0, 120)}${g.snippet.length > 120 ? "..." : ""}`}
-                          </p>
-                        )}
-                      </div>
+              {prominentLinks.filter((l) => l.category === "guidance").length > 0 && (
+                <Section title="NICE Guidance">
+                  {prominentLinks
+                    .filter((l) => l.category === "guidance")
+                    .map((link) => (
+                      <ProminentLink key={link.label} link={link} />
                     ))}
-                  </div>
-                )}
-                {/* Always show manual search link */}
-                {results.nice?.searchUrl && (
-                  <div className="ml-6 mt-1">
-                    <a
-                      href={results.nice.searchUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline"
-                      style={{ color: NHS_COLOURS.blue }}
-                    >
-                      Search NICE directly
-                    </a>
-                  </div>
-                )}
-              </Section>
+                </Section>
+              )}
 
               {/* ── Evidence Base ── */}
               <Section title="Evidence Base">
@@ -373,10 +257,10 @@ export default function ToolIntelligence({
                 )}
               </Section>
 
-              {/* ── Quick Links ── */}
+              {/* ── Other Quick Links ── */}
               <Section title="Verify Directly">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {results.smartLinks.map((link) => (
+                  {standardLinks.map((link) => (
                     <a
                       key={link.label}
                       href={link.url}
@@ -488,16 +372,40 @@ function StatusRow({
   );
 }
 
-// ── NICE type badge colours ──
-
-function niceTypeColour(guidanceType: string): string {
-  const t = guidanceType.toLowerCase();
-  if (t.includes("technology appraisal")) return "#5A2D82"; // purple
-  if (t.includes("medtech") || t.includes("mib")) return NHS_COLOURS.blue;
-  if (t.includes("diagnostics")) return "#007F3B"; // green
-  if (t.includes("medical technologies")) return "#41B6E6"; // light blue
-  if (t.includes("interventional")) return "#ED8B00"; // orange
-  if (t.includes("guideline") || t.includes("clinical")) return "#330072"; // dark purple
-  if (t.includes("quality standard")) return "#003087"; // dark blue
-  return NHS_COLOURS.darkBlue; // default
+/**
+ * A prominent search link displayed as a styled card within its parent
+ * section. Used for NICE and EUDAMED where we can't automate the search
+ * but want to guide the user to check manually.
+ */
+function ProminentLink({ link }: { link: SmartLink }) {
+  return (
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block rounded-md px-4 py-3 mt-2 transition-colors"
+      style={{
+        backgroundColor: NHS_COLOURS.blue + "08",
+        border: `1px solid ${NHS_COLOURS.blue}30`,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className="text-sm font-semibold underline"
+          style={{ color: NHS_COLOURS.blue }}
+        >
+          {link.label}
+        </span>
+        <span className="text-xs" style={{ color: NHS_COLOURS.blue }}>
+          ↗
+        </span>
+      </div>
+      <p
+        className="text-xs mt-1 leading-relaxed"
+        style={{ color: NHS_COLOURS.secondaryText, textDecoration: "none" }}
+      >
+        {link.description}
+      </p>
+    </a>
+  );
 }
