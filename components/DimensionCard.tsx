@@ -10,6 +10,13 @@ import {
 } from "../lib/constants";
 import type { FiredFlag } from "../lib/flags";
 
+interface MismatchResult {
+  mismatch: boolean;
+  confidence: "low" | "medium" | "high";
+  explanation: string;
+  suggestedFlagText: string;
+}
+
 interface DimensionCardProps {
   dimension: Dimension;
   score: Score | null;
@@ -54,11 +61,71 @@ export default function DimensionCard({
   const colourMap =
     side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
 
+  // ── Mismatch checker state ──
+  const [mismatchResult, setMismatchResult] = useState<MismatchResult | null>(null);
+  const [mismatchLoading, setMismatchLoading] = useState(false);
+  const [mismatchError, setMismatchError] = useState<string | null>(null);
+
+  // Reset mismatch result when score or justification changes
+  // (user has changed something, so the old check is stale)
   function handleScore(s: Score) {
     if (isUnknown && onClearUnknown) {
       onClearUnknown();
     }
+    setMismatchResult(null);
+    setMismatchError(null);
     onScore(s);
+  }
+
+  function handleJustificationChange(text: string) {
+    setMismatchResult(null);
+    setMismatchError(null);
+    onJustificationChange?.(text);
+  }
+
+  // Whether the "Check for mismatch" button should be available
+  const canCheckMismatch =
+    score !== null &&
+    !isUnknown &&
+    justification.trim().length >= 15 &&
+    !mismatchLoading;
+
+  async function runMismatchCheck() {
+    if (!canCheckMismatch || score === null) return;
+
+    setMismatchLoading(true);
+    setMismatchError(null);
+    setMismatchResult(null);
+
+    try {
+      const response = await fetch("/api/lookup/mismatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dimensionId: dimension.id,
+          dimensionName: dimension.longLabel,
+          side,
+          score,
+          scoreDescriptors: dimension.scoreDescriptors,
+          justification,
+          guidingQuestions: dimension.guidingQuestions,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
+      const result: MismatchResult = await response.json();
+      setMismatchResult(result);
+    } catch (e) {
+      setMismatchError(
+        e instanceof Error ? e.message : "Mismatch check failed",
+      );
+    } finally {
+      setMismatchLoading(false);
+    }
   }
 
   return (
@@ -230,19 +297,125 @@ export default function DimensionCard({
         <div className="mb-3">
           <textarea
             value={justification}
-            onChange={(e) => onJustificationChange(e.target.value)}
+            onChange={(e) => handleJustificationChange(e.target.value)}
             rows={2}
-            placeholder="Brief reasoning for this score (optional)"
+            placeholder="Brief reasoning for this score (optional but recommended for mismatch checking)"
             className="w-full px-3 py-2 rounded border text-sm"
             style={{
               borderColor: NHS_COLOURS.lightGrey,
               color: NHS_COLOURS.darkText,
             }}
           />
+
+          {/* Check for mismatch button */}
+          <div className="flex items-center gap-3 mt-1">
+            <button
+              onClick={runMismatchCheck}
+              disabled={!canCheckMismatch}
+              className="text-xs underline transition-opacity"
+              style={{
+                color: canCheckMismatch ? NHS_COLOURS.blue : NHS_COLOURS.grey,
+                opacity: canCheckMismatch ? 1 : 0.5,
+                cursor: canCheckMismatch ? "pointer" : "default",
+              }}
+            >
+              {mismatchLoading ? "Checking..." : "Check for mismatch"}
+            </button>
+            {mismatchLoading && (
+              <span
+                className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
+                style={{
+                  borderColor: NHS_COLOURS.lightGrey,
+                  borderTopColor: NHS_COLOURS.blue,
+                }}
+              />
+            )}
+          </div>
         </div>
       )}
 
-      {/* Consistency flag banners */}
+      {/* Mismatch check result */}
+      {mismatchResult && (
+        <div
+          className="rounded px-4 py-3 mb-2 border-l-4"
+          style={{
+            backgroundColor: mismatchResult.mismatch
+              ? NHS_COLOURS.amber + "15"
+              : NHS_COLOURS.green + "10",
+            borderLeftColor: mismatchResult.mismatch
+              ? NHS_COLOURS.amber
+              : NHS_COLOURS.green,
+          }}
+        >
+          {mismatchResult.mismatch ? (
+            <>
+              <div className="flex items-start gap-2">
+                <span className="text-base mt-0.5">⚠</span>
+                <div>
+                  <p
+                    className="text-sm font-medium mb-1"
+                    style={{ color: NHS_COLOURS.darkText }}
+                  >
+                    Potential mismatch detected{" "}
+                    <span
+                      className="font-normal text-xs px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: NHS_COLOURS.lightGrey,
+                        color: NHS_COLOURS.secondaryText,
+                      }}
+                    >
+                      {mismatchResult.confidence} confidence
+                    </span>
+                  </p>
+                  <p
+                    className="text-sm mb-2"
+                    style={{ color: NHS_COLOURS.darkText }}
+                  >
+                    {mismatchResult.explanation}
+                  </p>
+                  {mismatchResult.suggestedFlagText && (
+                    <div
+                      className="rounded px-3 py-2 text-xs"
+                      style={{
+                        backgroundColor: NHS_COLOURS.white,
+                        border: `1px solid ${NHS_COLOURS.lightGrey}`,
+                        color: NHS_COLOURS.secondaryText,
+                      }}
+                    >
+                      <span className="font-medium" style={{ color: NHS_COLOURS.darkText }}>
+                        Suggested flag text:
+                      </span>{" "}
+                      {mismatchResult.suggestedFlagText}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-base">✓</span>
+              <p className="text-sm" style={{ color: NHS_COLOURS.darkText }}>
+                Score and justification appear consistent.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mismatch check error */}
+      {mismatchError && (
+        <div
+          className="rounded px-4 py-3 mb-2 text-sm"
+          style={{
+            backgroundColor: NHS_COLOURS.lightGrey,
+            color: NHS_COLOURS.secondaryText,
+          }}
+        >
+          Could not check for mismatch: {mismatchError}
+        </div>
+      )}
+
+      {/* Rule-based consistency flag banners */}
       {flags.length > 0 &&
         flags.map((flag) => (
           <div
