@@ -72,7 +72,7 @@ export default function ProgressBar({ currentStep }: ProgressBarProps) {
               <span
                 className="mt-2 text-xs font-medium text-center"
                 style={{
-                  color: isCurrent ? NHS_COLOURS.blue : NHS_COLOURS.grey,
+                  color: isComplete || isCurrent ? NHS_COLOURS.blue : NHS_COLOURS.grey,
                 }}
               >
                 {label}
