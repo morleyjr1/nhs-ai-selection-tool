@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dimension } from "../lib/dimensions";
+import type { Dimension, DimensionSide } from "../lib/dimensions";
 import type { Score } from "../lib/types";
 import { NHS_COLOURS } from "../lib/constants";
 import DimensionCard from "./DimensionCard";
@@ -15,6 +15,7 @@ interface ScoringStepProps {
   onNext: () => void;
   onBack: () => void;
   nextLabel: string;
+  side?: DimensionSide;
   /** Sub-trigger configuration: map of dimension ID → sub-trigger props */
   subTriggers?: Record<
     string,
@@ -36,6 +37,7 @@ export default function ScoringStep({
   onNext,
   onBack,
   nextLabel,
+  side = "complexity",
   subTriggers = {},
 }: ScoringStepProps) {
   const allScored = dimensions.every((d) => scores[d.id] !== null && scores[d.id] !== undefined);
@@ -72,6 +74,7 @@ export default function ScoringStep({
           dimension={dim}
           score={scores[dim.id] ?? null}
           floor={floors[dim.id] ?? 0}
+          side={side}
           onScore={(s) => onScore(dim.id, s)}
           subTrigger={subTriggers[dim.id]}
         />

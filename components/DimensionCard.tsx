@@ -3,12 +3,14 @@
 import { useState } from "react";
 import type { Dimension } from "../lib/dimensions";
 import type { Score } from "../lib/types";
-import { NHS_COLOURS, SCORE_COLOURS } from "../lib/constants";
+import type { DimensionSide } from "../lib/dimensions";
+import { NHS_COLOURS, SCORE_COLOURS, READINESS_SCORE_COLOURS } from "../lib/constants";
 
 interface DimensionCardProps {
   dimension: Dimension;
   score: Score | null;
   floor?: number;
+  side?: DimensionSide;
   onScore: (score: Score) => void;
   /** Optional sub-trigger question (rendered below the score buttons) */
   subTrigger?: {
@@ -22,17 +24,19 @@ export default function DimensionCard({
   dimension,
   score,
   floor = 0,
+  side = "complexity",
   onScore,
   subTrigger,
 }: DimensionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const scores: Score[] = [1, 2, 3];
+  const colourMap = side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
 
   return (
     <div
       className="rounded-lg p-5 mb-4 border"
       style={{
-        borderColor: score ? SCORE_COLOURS[score] : NHS_COLOURS.lightGrey,
+        borderColor: score ? colourMap[score] : NHS_COLOURS.lightGrey,
         backgroundColor: NHS_COLOURS.white,
       }}
     >
@@ -99,7 +103,7 @@ export default function DimensionCard({
         {scores.map((s) => {
           const isDisabled = s < floor;
           const isSelected = score === s;
-          const colour = SCORE_COLOURS[s];
+          const colour = colourMap[s];
 
           return (
             <button
@@ -126,8 +130,8 @@ export default function DimensionCard({
         <div
           className="rounded px-3 py-2 mb-3 text-sm"
           style={{
-            backgroundColor: SCORE_COLOURS[score] + "10",
-            borderLeft: `3px solid ${SCORE_COLOURS[score]}`,
+            backgroundColor: colourMap[score] + "10",
+            borderLeft: `3px solid ${colourMap[score]}`,
             color: NHS_COLOURS.darkText,
           }}
         >

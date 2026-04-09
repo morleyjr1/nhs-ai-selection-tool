@@ -194,6 +194,7 @@ export default function SelectionTool() {
             description="Score each dimension based on the deploying organisation's current capabilities. Higher scores indicate greater readiness."
             dimensions={readinessDimensions}
             scores={rScores}
+            side="readiness"
             onScore={handleRScore}
             onBack={() => setStep(2)}
             onNext={handleRunAssessment}

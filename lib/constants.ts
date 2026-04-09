@@ -31,6 +31,13 @@ export const SCORE_COLOURS = {
   3: NHS_COLOURS.red,
 } as const;
 
+/** Readiness score → colour mapping (1 = red, 2 = amber, 3 = green) */
+export const READINESS_SCORE_COLOURS = {
+  1: NHS_COLOURS.red,
+  2: NHS_COLOURS.amber,
+  3: NHS_COLOURS.green,
+} as const;
+
 /** Gap → colour mapping (0 = green, 1 = amber, 2 = red) */
 export const GAP_COLOURS = {
   0: NHS_COLOURS.green,
