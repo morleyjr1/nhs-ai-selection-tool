@@ -24,14 +24,14 @@ export const CLASSIFICATION_COLOURS = {
   Avoid: NHS_COLOURS.red,
 } as const;
 
-/** Score → colour mapping (1 = green, 2 = amber, 3 = red) */
+/** Complexity score → colour mapping (1 = green, 2 = amber, 3 = red) */
 export const SCORE_COLOURS = {
   1: NHS_COLOURS.green,
   2: NHS_COLOURS.amber,
   3: NHS_COLOURS.red,
 } as const;
 
-/** Readiness score → colour mapping (1 = red, 2 = amber, 3 = green) */
+/** Readiness score → colour mapping (reversed: 1 = red, 2 = amber, 3 = green) */
 export const READINESS_SCORE_COLOURS = {
   1: NHS_COLOURS.red,
   2: NHS_COLOURS.amber,
@@ -55,11 +55,12 @@ export const TOOL_CATEGORIES = [
 
 /** Device classification options (Q8) */
 export const DEVICE_CLASSES = [
-  { value: 1, label: "No classification / unknown" },
+  { value: 1, label: "Not a medical device / no classification required" },
   { value: 2, label: "Class I (low risk)" },
   { value: 3, label: "Class IIa (medium risk)" },
   { value: 4, label: "Class IIb (medium risk)" },
   { value: 5, label: "Class III (high risk)" },
+  { value: 6, label: "Unknown" },
 ] as const;
 
 /** Determinism options (Q10) */

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Shared TypeScript interfaces for the NHS AI Selection Tool.
+// Shared TypeScript interfaces for the NHS AI Adoption Assessment Tool.
 // Designed for Phase 1 (client-side) with Phase 2 backend in mind.
 // ---------------------------------------------------------------------------
 
@@ -20,12 +20,13 @@ export type ToolCategory = 1 | 2 | 3 | 4;
 // 3: Clinical decision support
 // 4: Autonomous clinical function
 
-export type DeviceClass = 1 | 2 | 3 | 4 | 5;
-// 1: No classification/unknown
+export type DeviceClass = 1 | 2 | 3 | 4 | 5 | 6;
+// 1: Not a medical device / no classification required
 // 2: Class I (low risk)
 // 3: Class IIa (medium risk)
 // 4: Class IIb (medium risk)
 // 5: Class III (high risk)
+// 6: Unknown
 
 export type Determinism = 1 | 2 | 3;
 // 1: Deterministic

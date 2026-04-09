@@ -13,6 +13,7 @@ import { NHS_COLOURS } from "../lib/constants";
 import { evaluateFlags, containsIDontKnow } from "../lib/flags";
 import type { FiredFlag } from "../lib/flags";
 
+import LandingPage from "./LandingPage";
 import ProgressBar from "./ProgressBar";
 import FramingStep from "./FramingStep";
 import BasicDataStep from "./BasicDataStep";
@@ -31,6 +32,9 @@ const EMPTY_BASIC_DATA: BasicData = {
 };
 
 export default function SelectionTool() {
+  // ── Landing page vs wizard ──
+  const [showLanding, setShowLanding] = useState(true);
+
   // ── Wizard state ──
   const [step, setStep] = useState(0);
 
@@ -70,17 +74,12 @@ export default function SelectionTool() {
   const lastLookedUpRef = useRef<string>("");
 
   // ── Debounced tool name lookup ──
-  // Triggers 800ms after the user stops typing. Caches results per tool name
-  // so re-entering a name does not re-fetch.
   useEffect(() => {
     const toolName = basicData.toolName.trim();
 
-    // Clear pending debounce on every keystroke
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    // Don't search for very short names
     if (toolName.length < 3) {
-      // If results are showing for a previous name, clear them
       if (lookupResults && toolName.length === 0) {
         setLookupResults(null);
         setLookupError(undefined);
@@ -88,10 +87,8 @@ export default function SelectionTool() {
       return;
     }
 
-    // Already looked up this exact name — skip
     if (toolName === lastLookedUpRef.current) return;
 
-    // Check cache first
     if (lookupCacheRef.current[toolName]) {
       setLookupResults(lookupCacheRef.current[toolName]);
       setLookupLoading(false);
@@ -140,7 +137,6 @@ export default function SelectionTool() {
 
   // ── Derived: consistency flags ──
   const firedFlags = useMemo(() => {
-    // Build scores record (both C and R, numeric)
     const allScores: Record<string, number> = {};
     for (const [k, v] of Object.entries(cScores)) {
       if (v !== null) allScores[k] = v;
@@ -149,7 +145,6 @@ export default function SelectionTool() {
       if (v !== null) allScores[k] = v;
     }
 
-    // Build text record: basic data fields + all justifications
     const allTexts: Record<string, string> = {
       toolPurpose: basicData.toolPurpose ?? "",
       toolProblem: basicData.toolProblem ?? "",
@@ -160,7 +155,6 @@ export default function SelectionTool() {
     return evaluateFlags(allScores, allTexts, basicData.category);
   }, [cScores, rScores, cJustifications, rJustifications, basicData]);
 
-  // Group fired flags by target dimension
   const flagsByDimension = useMemo(() => {
     const grouped: Record<string, FiredFlag[]> = {};
     for (const f of firedFlags) {
@@ -180,7 +174,6 @@ export default function SelectionTool() {
     const floor = floors[dimId] ?? 0;
     const effective = applyFloor(score, floor) as Score;
     setCScores((prev) => ({ ...prev, [dimId]: effective }));
-    // Clear unknown state when scoring
     setCUnknowns((prev) => ({ ...prev, [dimId]: false }));
   }
 
@@ -193,7 +186,6 @@ export default function SelectionTool() {
     setSubAnswers((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Justification handlers with "I don't know" detection
   function handleCJustification(dimId: string, text: string) {
     setCJustifications((prev) => ({ ...prev, [dimId]: text }));
     if (containsIDontKnow(text)) {
@@ -210,7 +202,6 @@ export default function SelectionTool() {
     }
   }
 
-  // "I don't know" button handlers
   function handleCIDontKnow(dimId: string) {
     setCUnknowns((prev) => ({ ...prev, [dimId]: true }));
     setCScores((prev) => ({ ...prev, [dimId]: null }));
@@ -246,7 +237,6 @@ export default function SelectionTool() {
 
   function handleExport() {
     if (!assessment) return;
-    // Include justifications, fired flags, and lookup results in export
     const exportData = {
       ...assessment,
       justifications: { ...cJustifications, ...rJustifications },
@@ -300,6 +290,12 @@ export default function SelectionTool() {
     };
   }
 
+  // ── Landing page ──
+  if (showLanding) {
+    return <LandingPage onStart={() => setShowLanding(false)} />;
+  }
+
+  // ── Wizard ──
   return (
     <div
       className="min-h-screen"
@@ -324,7 +320,7 @@ export default function SelectionTool() {
               className="text-xl font-bold"
               style={{ color: NHS_COLOURS.darkBlue }}
             >
-              NHS AI Selection Tool
+              NHS AI Adoption Assessment Tool
             </h1>
             <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
               12×12 Paired Complexity–Readiness Framework

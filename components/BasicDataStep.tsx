@@ -36,10 +36,12 @@ export default function BasicDataStep({
 
   const determinismBlocked = data.determinism === 3;
   const regulatoryBlocked = data.regulatoryAwareness === "No";
+  const deviceClassBlocked = data.deviceClass === 6;
   const canProceed =
     data.toolName.trim() !== "" &&
     data.category > 0 &&
     data.deviceClass > 0 &&
+    !deviceClassBlocked &&
     data.determinism > 0 &&
     !determinismBlocked &&
     data.regulatoryAwareness === "Yes" &&
@@ -110,8 +112,8 @@ export default function BasicDataStep({
             className="text-xs mt-1"
             style={{ color: NHS_COLOURS.secondaryText }}
           >
-            After entering the tool name, we will automatically search public
-            databases for regulatory and evidence information.
+            We will automatically search public databases (FDA, PubMed,
+            ClinicalTrials.gov) for this tool. This may take a moment.
           </p>
 
           {/* Tool Intelligence panel — appears below tool name */}
@@ -217,51 +219,51 @@ export default function BasicDataStep({
           )}
         </fieldset>
 
-        {/* Q6: Deployment scope */}
-        <div>
-          <label
-            className="block text-sm font-medium mb-1"
+        {/* Q6: Deployment scope — radio buttons */}
+        <fieldset>
+          <legend
+            className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
             Q6. Deployment scope
-          </label>
-          <select
-            value={data.scope ?? ""}
-            onChange={(e) => update("scope", e.target.value || undefined)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
-          >
-            <option value="">Select...</option>
+          </legend>
+          <div className="space-y-2">
             {DEPLOYMENT_SCOPES.map((scope) => (
-              <option key={scope} value={scope}>
-                {scope}
-              </option>
+              <label key={scope} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="scope"
+                  checked={data.scope === scope}
+                  onChange={() => update("scope", scope)}
+                />
+                <span style={{ color: NHS_COLOURS.darkText }}>{scope}</span>
+              </label>
             ))}
-          </select>
-        </div>
+          </div>
+        </fieldset>
 
-        {/* Q7: Adoption stage */}
-        <div>
-          <label
-            className="block text-sm font-medium mb-1"
+        {/* Q7: Adoption stage — radio buttons */}
+        <fieldset>
+          <legend
+            className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
             Q7. Adoption stage
-          </label>
-          <select
-            value={data.adoptionStage ?? ""}
-            onChange={(e) => update("adoptionStage", e.target.value || undefined)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
-          >
-            <option value="">Select...</option>
+          </legend>
+          <div className="space-y-2">
             {ADOPTION_STAGES.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}
-              </option>
+              <label key={stage} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="adoptionStage"
+                  checked={data.adoptionStage === stage}
+                  onChange={() => update("adoptionStage", stage)}
+                />
+                <span style={{ color: NHS_COLOURS.darkText }}>{stage}</span>
+              </label>
             ))}
-          </select>
-        </div>
+          </div>
+        </fieldset>
 
         {/* Q8: Device classification * */}
         <fieldset>
@@ -289,6 +291,35 @@ export default function BasicDataStep({
               </label>
             ))}
           </div>
+
+          {/* Unknown device class warning */}
+          {deviceClassBlocked && (
+            <div
+              className="rounded-lg p-4 mt-3 border-l-4"
+              style={{
+                backgroundColor: "#FEF3F2",
+                borderLeftColor: NHS_COLOURS.red,
+              }}
+            >
+              <p
+                className="font-semibold text-sm"
+                style={{ color: NHS_COLOURS.red }}
+              >
+                Assessment cannot proceed without this information
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: NHS_COLOURS.darkText }}
+              >
+                The device classification determines the minimum safety and
+                monitoring floors applied to the assessment. Without knowing
+                whether this tool is a medical device — and if so, its risk
+                class — the framework cannot calculate accurate scoring floors.
+                Please consult the MHRA guidance on software and AI as a medical
+                device, or check with the vendor.
+              </p>
+            </div>
+          )}
         </fieldset>
 
         {/* Q9: Regulatory awareness * */}
@@ -458,35 +489,35 @@ export default function BasicDataStep({
                 complexity scores applied to several dimensions (human oversight,
                 validation, and monitoring). Without this information, the
                 framework cannot calculate accurate scoring floors and the
-                assessment would be unreliable. Please consult the tool's
+                assessment would be unreliable. Please consult the tool&apos;s
                 technical documentation or development team before proceeding.
               </p>
             </div>
           )}
         </fieldset>
 
-        {/* Q11: Developer type */}
-        <div>
-          <label
-            className="block text-sm font-medium mb-1"
+        {/* Q11: Developer type — radio buttons */}
+        <fieldset>
+          <legend
+            className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
             Q11. Developer type
-          </label>
-          <select
-            value={data.developer ?? ""}
-            onChange={(e) => update("developer", e.target.value || undefined)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
-          >
-            <option value="">Select...</option>
+          </legend>
+          <div className="space-y-2">
             {DEVELOPER_TYPES.map((dt) => (
-              <option key={dt} value={dt}>
-                {dt}
-              </option>
+              <label key={dt} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="developer"
+                  checked={data.developer === dt}
+                  onChange={() => update("developer", dt)}
+                />
+                <span style={{ color: NHS_COLOURS.darkText }}>{dt}</span>
+              </label>
             ))}
-          </select>
-        </div>
+          </div>
+        </fieldset>
       </div>
 
       {/* Navigation */}
