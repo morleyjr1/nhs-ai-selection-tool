@@ -26,13 +26,16 @@ export default function BasicDataStep({
   const [data, setData] = useState<BasicData>(initialData);
   const [otherUser, setOtherUser] = useState("");
 
-  const determinismBlocked = data.determinism === 3; // "Unknown" blocks progression
+  const determinismBlocked = data.determinism === 3;
+  const regulatoryBlocked = data.regulatoryAwareness === "No";
   const canProceed =
     data.toolName.trim() !== "" &&
     data.category > 0 &&
     data.deviceClass > 0 &&
     data.determinism > 0 &&
-    !determinismBlocked;
+    !determinismBlocked &&
+    data.regulatoryAwareness === "Yes" &&
+    !regulatoryBlocked;
 
   function update<K extends keyof BasicData>(field: K, value: BasicData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -266,17 +269,17 @@ export default function BasicDataStep({
           </div>
         </fieldset>
 
-        {/* Q9: Regulatory awareness */}
+        {/* Q9: Regulatory awareness * */}
         <fieldset>
           <legend
             className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
             Q9. Is the development team aware of relevant regulatory
-            requirements?
+            requirements? *
           </legend>
           <div className="flex gap-4">
-            {(["Yes", "No", "Unknown"] as const).map((val) => (
+            {(["Yes", "No"] as const).map((val) => (
               <label key={val} className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
@@ -288,6 +291,34 @@ export default function BasicDataStep({
               </label>
             ))}
           </div>
+
+          {/* Regulatory "No" warning */}
+          {regulatoryBlocked && (
+            <div
+              className="rounded-lg p-4 mt-3 border-l-4"
+              style={{
+                backgroundColor: "#FEF3F2",
+                borderLeftColor: NHS_COLOURS.red,
+              }}
+            >
+              <p
+                className="font-semibold text-sm"
+                style={{ color: NHS_COLOURS.red }}
+              >
+                Assessment cannot proceed without regulatory awareness
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: NHS_COLOURS.darkText }}
+              >
+                If the development team is not aware of the relevant regulatory
+                requirements for this tool, the assessment cannot reliably score
+                safety, validation, or monitoring dimensions. The development
+                team should be directed to the MHRA guidance on software and AI
+                as a medical device before this assessment is completed.
+              </p>
+            </div>
+          )}
         </fieldset>
 
         {/* Q10: Determinism * */}
