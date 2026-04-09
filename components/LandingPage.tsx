@@ -1,12 +1,41 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { NHS_COLOURS } from "../lib/constants";
+import { getSavedSummary, clearSavedState } from "../lib/save";
+
+const STEP_NAMES = ["Framing", "Basic Data", "Complexity", "Readiness", "Results"];
 
 interface LandingPageProps {
   onStart: () => void;
+  onResume: () => void;
 }
 
-export default function LandingPage({ onStart }: LandingPageProps) {
+export default function LandingPage({ onStart, onResume }: LandingPageProps) {
+  const [savedSummary, setSavedSummary] = useState<{
+    toolName: string;
+    savedAt: string;
+    step: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setSavedSummary(getSavedSummary());
+  }, []);
+
+  function handleDiscard() {
+    clearSavedState();
+    setSavedSummary(null);
+  }
+
+  function formatDate(iso: string): string {
+    try {
+      const d = new Date(iso);
+      return `${d.toLocaleDateString("en-GB")} at ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+    } catch {
+      return iso;
+    }
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -19,7 +48,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           <img
             src="/ai-centre-logo.png"
             alt="AI Centre for Value Based Healthcare"
-            className="h-56 w-auto mx-auto mb-8"
+            className="h-40 w-auto mx-auto mb-8"
           />
 
           {/* Title */}
@@ -35,6 +64,60 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           >
             12×12 Paired Complexity–Readiness Framework
           </p>
+
+          {/* Resume prompt — shown if saved state exists */}
+          {savedSummary && (
+            <div
+              className="rounded-lg p-5 mb-8 text-left border"
+              style={{
+                borderColor: NHS_COLOURS.blue,
+                backgroundColor: NHS_COLOURS.blue + "08",
+              }}
+            >
+              <h3
+                className="text-sm font-semibold mb-2"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                You have an assessment in progress
+              </h3>
+              <p
+                className="text-sm mb-3"
+                style={{ color: NHS_COLOURS.darkText }}
+              >
+                <span className="font-medium">{savedSummary.toolName || "Untitled assessment"}</span>
+                {" — "}
+                saved {formatDate(savedSummary.savedAt)}
+                {savedSummary.step > 0 && (
+                  <span style={{ color: NHS_COLOURS.secondaryText }}>
+                    {" "}(Step {savedSummary.step + 1}: {STEP_NAMES[savedSummary.step] ?? "Unknown"})
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={onResume}
+                  className="px-6 py-2.5 rounded font-medium text-sm transition-opacity hover:opacity-90"
+                  style={{
+                    backgroundColor: NHS_COLOURS.blue,
+                    color: NHS_COLOURS.white,
+                  }}
+                >
+                  Resume Assessment →
+                </button>
+                <button
+                  onClick={handleDiscard}
+                  className="px-6 py-2.5 rounded font-medium text-sm"
+                  style={{
+                    color: NHS_COLOURS.secondaryText,
+                    border: `1px solid ${NHS_COLOURS.grey}`,
+                    backgroundColor: NHS_COLOURS.white,
+                  }}
+                >
+                  Discard and Start Fresh
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div
@@ -116,17 +199,36 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </p>
           </div>
 
-          {/* CTA */}
-          <button
-            onClick={onStart}
-            className="px-10 py-4 rounded-lg font-semibold text-base transition-opacity hover:opacity-90"
-            style={{
-              backgroundColor: NHS_COLOURS.blue,
-              color: NHS_COLOURS.white,
-            }}
-          >
-            Begin Assessment →
-          </button>
+          {/* CTA — only show if no resume prompt, otherwise it's redundant */}
+          {!savedSummary && (
+            <button
+              onClick={onStart}
+              className="px-10 py-4 rounded-lg font-semibold text-base transition-opacity hover:opacity-90"
+              style={{
+                backgroundColor: NHS_COLOURS.blue,
+                color: NHS_COLOURS.white,
+              }}
+            >
+              Begin Assessment →
+            </button>
+          )}
+
+          {/* Show "Begin new" as secondary when resume is showing */}
+          {savedSummary && (
+            <button
+              onClick={() => {
+                handleDiscard();
+                onStart();
+              }}
+              className="px-10 py-4 rounded-lg font-semibold text-base transition-opacity hover:opacity-90"
+              style={{
+                backgroundColor: NHS_COLOURS.blue,
+                color: NHS_COLOURS.white,
+              }}
+            >
+              Begin New Assessment →
+            </button>
+          )}
 
           {/* Footer note */}
           <p

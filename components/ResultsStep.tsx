@@ -1,22 +1,53 @@
 "use client";
 
 import type { AssessmentResult } from "../lib/classify";
+import type { BasicData } from "../lib/types";
+import type { LookupResults } from "../lib/lookup";
+import type { FiredFlag } from "../lib/flags";
 import { NHS_COLOURS, CLASSIFICATION_COLOURS } from "../lib/constants";
+import { generatePDFReport } from "../lib/pdf-report";
 import GapMap from "./GapMap";
 
 interface ResultsStepProps {
   assessment: AssessmentResult;
+  basicData: BasicData;
+  justifications: Record<string, string>;
+  firedFlags: FiredFlag[];
+  lookupResults?: LookupResults | null;
   onBack: () => void;
-  onExport: () => void;
+  onExportJSON: () => void;
+  onClearSave?: () => void;
 }
 
 export default function ResultsStep({
   assessment,
+  basicData,
+  justifications,
+  firedFlags,
+  lookupResults,
   onBack,
-  onExport,
+  onExportJSON,
+  onClearSave,
 }: ResultsStepProps) {
   const classColour =
     CLASSIFICATION_COLOURS[assessment.classification] ?? NHS_COLOURS.grey;
+
+  function handleExportPDF() {
+    generatePDFReport({
+      assessment,
+      basicData,
+      justifications,
+      firedFlags,
+      lookupResults,
+    });
+    // Clear saved state after export
+    onClearSave?.();
+  }
+
+  function handleExportJSON() {
+    onExportJSON();
+    onClearSave?.();
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -32,7 +63,10 @@ export default function ResultsStep({
         className="rounded-lg p-6 mb-8 text-center"
         style={{ backgroundColor: classColour + "15" }}
       >
-        <p className="text-sm font-medium mb-2" style={{ color: NHS_COLOURS.secondaryText }}>
+        <p
+          className="text-sm font-medium mb-2"
+          style={{ color: NHS_COLOURS.secondaryText }}
+        >
           Classification
         </p>
         <span
@@ -230,7 +264,7 @@ export default function ResultsStep({
       </div>
 
       {/* Navigation & Export */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <button
           onClick={onBack}
           className="px-6 py-3 rounded font-medium text-sm"
@@ -242,16 +276,29 @@ export default function ResultsStep({
         >
           ← Back to Readiness
         </button>
-        <button
-          onClick={onExport}
-          className="px-8 py-3 rounded font-medium text-sm"
-          style={{
-            backgroundColor: NHS_COLOURS.blue,
-            color: NHS_COLOURS.white,
-          }}
-        >
-          Export as JSON ↓
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleExportJSON}
+            className="px-6 py-3 rounded font-medium text-sm"
+            style={{
+              color: NHS_COLOURS.blue,
+              border: `1px solid ${NHS_COLOURS.blue}`,
+              backgroundColor: NHS_COLOURS.white,
+            }}
+          >
+            Export JSON
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="px-8 py-3 rounded font-medium text-sm"
+            style={{
+              backgroundColor: NHS_COLOURS.blue,
+              color: NHS_COLOURS.white,
+            }}
+          >
+            Export PDF Report ↓
+          </button>
+        </div>
       </div>
     </div>
   );

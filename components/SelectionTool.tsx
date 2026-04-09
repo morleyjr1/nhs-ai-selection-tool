@@ -12,6 +12,7 @@ import { runAssessment } from "../lib/classify";
 import { NHS_COLOURS } from "../lib/constants";
 import { evaluateFlags, containsIDontKnow } from "../lib/flags";
 import type { FiredFlag } from "../lib/flags";
+import { saveState, loadState, clearSavedState } from "../lib/save";
 
 import LandingPage from "./LandingPage";
 import ProgressBar from "./ProgressBar";
@@ -31,6 +32,25 @@ const EMPTY_BASIC_DATA: BasicData = {
   determinism: 0 as any,
 };
 
+const EMPTY_C_SCORES = Object.fromEntries(
+  complexityDimensions.map((d) => [d.id, null]),
+);
+const EMPTY_R_SCORES = Object.fromEntries(
+  readinessDimensions.map((d) => [d.id, null]),
+);
+const EMPTY_JUSTIFICATIONS = Object.fromEntries(
+  complexityDimensions.map((d) => [d.id, ""]),
+);
+const EMPTY_R_JUSTIFICATIONS = Object.fromEntries(
+  readinessDimensions.map((d) => [d.id, ""]),
+);
+const EMPTY_UNKNOWNS = Object.fromEntries(
+  complexityDimensions.map((d) => [d.id, false]),
+);
+const EMPTY_R_UNKNOWNS = Object.fromEntries(
+  readinessDimensions.map((d) => [d.id, false]),
+);
+
 export default function SelectionTool() {
   // ── Landing page vs wizard ──
   const [showLanding, setShowLanding] = useState(true);
@@ -41,28 +61,28 @@ export default function SelectionTool() {
   // ── Data state ──
   const [basicData, setBasicData] = useState<BasicData>(EMPTY_BASIC_DATA);
   const [cScores, setCScores] = useState<Record<string, Score | null>>(
-    Object.fromEntries(complexityDimensions.map((d) => [d.id, null])),
+    { ...EMPTY_C_SCORES },
   );
   const [rScores, setRScores] = useState<Record<string, Score | null>>(
-    Object.fromEntries(readinessDimensions.map((d) => [d.id, null])),
+    { ...EMPTY_R_SCORES },
   );
   const [subAnswers, setSubAnswers] = useState<SubTriggerAnswers>({});
   const [assessment, setAssessment] = useState<AssessmentResult | null>(null);
 
   // ── Justification text state ──
   const [cJustifications, setCJustifications] = useState<Record<string, string>>(
-    Object.fromEntries(complexityDimensions.map((d) => [d.id, ""])),
+    { ...EMPTY_JUSTIFICATIONS },
   );
   const [rJustifications, setRJustifications] = useState<Record<string, string>>(
-    Object.fromEntries(readinessDimensions.map((d) => [d.id, ""])),
+    { ...EMPTY_R_JUSTIFICATIONS },
   );
 
   // ── "I don't know" state ──
   const [cUnknowns, setCUnknowns] = useState<Record<string, boolean>>(
-    Object.fromEntries(complexityDimensions.map((d) => [d.id, false])),
+    { ...EMPTY_UNKNOWNS },
   );
   const [rUnknowns, setRUnknowns] = useState<Record<string, boolean>>(
-    Object.fromEntries(readinessDimensions.map((d) => [d.id, false])),
+    { ...EMPTY_R_UNKNOWNS },
   );
 
   // ── Tool Intelligence lookup state ──
@@ -73,13 +93,10 @@ export default function SelectionTool() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLookupKeyRef = useRef<string>("");
 
-  // ── Real-time lookup fields (updated by BasicDataStep callback) ──
-  const [lookupToolName, setLookupToolName] = useState(basicData.toolName);
-  const [lookupManufacturer, setLookupManufacturer] = useState(
-    basicData.manufacturerName ?? "",
-  );
+  // ── Real-time lookup fields ──
+  const [lookupToolName, setLookupToolName] = useState("");
+  const [lookupManufacturer, setLookupManufacturer] = useState("");
 
-  /** Called by BasicDataStep whenever tool name or manufacturer changes */
   function handleLookupFieldsChange(
     toolName: string,
     manufacturerName?: string,
@@ -88,7 +105,65 @@ export default function SelectionTool() {
     setLookupManufacturer(manufacturerName ?? "");
   }
 
-  // ── Debounced lookup — triggers on real-time field changes ──
+  // ── Auto-save: save state whenever anything changes ──
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Don't save if still on landing page or if there's nothing to save
+    if (showLanding) return;
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveState({
+        step,
+        basicData,
+        cScores,
+        rScores,
+        subAnswers,
+        cJustifications,
+        rJustifications,
+        cUnknowns,
+        rUnknowns,
+      });
+    }, 500);
+  }, [
+    showLanding,
+    step,
+    basicData,
+    cScores,
+    rScores,
+    subAnswers,
+    cJustifications,
+    rJustifications,
+    cUnknowns,
+    rUnknowns,
+  ]);
+
+  // ── Resume from saved state ──
+  function handleResume() {
+    const saved = loadState();
+    if (!saved) return;
+
+    setStep(saved.step);
+    setBasicData(saved.basicData);
+    setCScores(saved.cScores);
+    setRScores(saved.rScores);
+    setSubAnswers(saved.subAnswers);
+    setCJustifications(saved.cJustifications);
+    setRJustifications(saved.rJustifications);
+    setCUnknowns(saved.cUnknowns);
+    setRUnknowns(saved.rUnknowns);
+
+    // Trigger lookup for restored tool name
+    if (saved.basicData.toolName) {
+      setLookupToolName(saved.basicData.toolName);
+      setLookupManufacturer(saved.basicData.manufacturerName ?? "");
+    }
+
+    setShowLanding(false);
+  }
+
+  // ── Debounced lookup ──
   useEffect(() => {
     const toolName = lookupToolName.trim();
     const manufacturer = lookupManufacturer.trim();
@@ -103,7 +178,6 @@ export default function SelectionTool() {
       return;
     }
 
-    // Cache key includes manufacturer so changing manufacturer re-triggers
     const cacheKey = `${toolName}||${manufacturer}`;
     if (cacheKey === lastLookupKeyRef.current) return;
 
@@ -121,10 +195,7 @@ export default function SelectionTool() {
       setLookupError(undefined);
 
       try {
-        const results = await runLookup(
-          toolName,
-          manufacturer || undefined,
-        );
+        const results = await runLookup(toolName, manufacturer || undefined);
         lookupCacheRef.current[cacheKey] = results;
         setLookupResults(results);
       } catch (e) {
@@ -256,7 +327,7 @@ export default function SelectionTool() {
     setStep(4);
   }, [basicData, cScores, rScores, subAnswers]);
 
-  function handleExport() {
+  function handleExportJSON() {
     if (!assessment) return;
     const exportData = {
       ...assessment,
@@ -313,7 +384,12 @@ export default function SelectionTool() {
 
   // ── Landing page ──
   if (showLanding) {
-    return <LandingPage onStart={() => setShowLanding(false)} />;
+    return (
+      <LandingPage
+        onStart={() => setShowLanding(false)}
+        onResume={handleResume}
+      />
+    );
   }
 
   // ── Wizard ──
@@ -415,8 +491,13 @@ export default function SelectionTool() {
         {step === 4 && assessment && (
           <ResultsStep
             assessment={assessment}
+            basicData={basicData}
+            justifications={{ ...cJustifications, ...rJustifications }}
+            firedFlags={firedFlags}
+            lookupResults={lookupResults}
             onBack={() => setStep(3)}
-            onExport={handleExport}
+            onExportJSON={handleExportJSON}
+            onClearSave={clearSavedState}
           />
         )}
       </main>
