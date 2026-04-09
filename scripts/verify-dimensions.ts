@@ -14,9 +14,9 @@ const shortWhy = dimensions
 console.log("Empty / short whyItMatters:", shortWhy);
 
 const withConditional = dimensions
-  .filter((d) => d.conditionalNote !== undefined)
+  .filter((d) => d.dimensionNote !== undefined
   .map((d) => d.id);
-console.log("Dimensions with conditionalNote:", withConditional);
+console.log("Dimensions with dimensionNote:", withConditional);
 
 const wrongDescriptorCount = dimensions
   .filter((d) => d.scoreDescriptors.length !== 3)
