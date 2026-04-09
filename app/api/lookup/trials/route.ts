@@ -17,8 +17,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Use phrase search (quoted) for specificity
     const params = new URLSearchParams({
-      "query.term": q,
+      "query.term": `"${q}"`,
       pageSize: "10",
       format: "json",
       "fields": "NCTId,BriefTitle,OverallStatus,LeadSponsorName,Phase,LocationCountry,LocationCity",

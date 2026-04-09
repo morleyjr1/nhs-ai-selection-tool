@@ -19,9 +19,13 @@ export async function GET(req: NextRequest) {
 
   try {
     // Step 1: Search for PMIDs
+    // Wrap in quotes for phrase search, then also try as a broader fallback.
+    // PubMed phrase search: "Hippocratic AI" will only match that exact string.
+    // If phrase search returns nothing, fall back to unquoted.
+    const phraseTerm = `"${q}"`;
     const searchParams = new URLSearchParams({
       db: "pubmed",
-      term: q,
+      term: phraseTerm,
       retmax: "10",
       sort: "relevance",
       retmode: "json",
@@ -31,8 +35,25 @@ export async function GET(req: NextRequest) {
     if (!searchRes.ok) throw new Error(`PubMed esearch failed: ${searchRes.status}`);
     const searchData = await searchRes.json();
 
-    const idList: string[] = searchData?.esearchresult?.idlist ?? [];
-    const totalCount = parseInt(searchData?.esearchresult?.count ?? "0", 10);
+    let idList: string[] = searchData?.esearchresult?.idlist ?? [];
+    let totalCount = parseInt(searchData?.esearchresult?.count ?? "0", 10);
+
+    // If phrase search returned nothing, retry with unquoted (broader) search
+    if (idList.length === 0) {
+      const fallbackParams = new URLSearchParams({
+        db: "pubmed",
+        term: q,
+        retmax: "10",
+        sort: "relevance",
+        retmode: "json",
+      });
+      const fallbackRes = await fetch(`${ESEARCH_URL}?${fallbackParams}`);
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        idList = fallbackData?.esearchresult?.idlist ?? [];
+        totalCount = parseInt(fallbackData?.esearchresult?.count ?? "0", 10);
+      }
+    }
 
     if (idList.length === 0) {
       return NextResponse.json({ status: "not_found", count: 0, results: [] });
