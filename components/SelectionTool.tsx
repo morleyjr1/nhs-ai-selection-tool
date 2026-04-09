@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Score, BasicData, SubTriggerAnswers } from "../lib/types";
 import type { AssessmentResult } from "../lib/classify";
 import { complexityDimensions, readinessDimensions } from "../lib/dimensions";
@@ -8,6 +8,8 @@ import { computeFloors, applyFloor } from "../lib/floors";
 import { getSubTriggerVisibility } from "../lib/hardgates";
 import { runAssessment } from "../lib/classify";
 import { NHS_COLOURS } from "../lib/constants";
+import { evaluateFlags, containsIDontKnow } from "../lib/flags";
+import type { FiredFlag } from "../lib/flags";
 
 import ProgressBar from "./ProgressBar";
 import FramingStep from "./FramingStep";
@@ -41,9 +43,27 @@ export default function SelectionTool() {
   const [subAnswers, setSubAnswers] = useState<SubTriggerAnswers>({});
   const [assessment, setAssessment] = useState<AssessmentResult | null>(null);
 
+  // ── Justification text state ──
+  const [cJustifications, setCJustifications] = useState<Record<string, string>>(
+    Object.fromEntries(complexityDimensions.map((d) => [d.id, ""])),
+  );
+  const [rJustifications, setRJustifications] = useState<Record<string, string>>(
+    Object.fromEntries(readinessDimensions.map((d) => [d.id, ""])),
+  );
+
+  // ── "I don't know" state ──
+  const [cUnknowns, setCUnknowns] = useState<Record<string, boolean>>(
+    Object.fromEntries(complexityDimensions.map((d) => [d.id, false])),
+  );
+  const [rUnknowns, setRUnknowns] = useState<Record<string, boolean>>(
+    Object.fromEntries(readinessDimensions.map((d) => [d.id, false])),
+  );
+
   // ── Derived: scoring floors ──
   const floors =
-    basicData.category > 0 && basicData.deviceClass > 0 && basicData.determinism > 0
+    basicData.category > 0 &&
+    basicData.deviceClass > 0 &&
+    basicData.determinism > 0
       ? computeFloors(basicData)
       : {};
 
@@ -53,6 +73,38 @@ export default function SelectionTool() {
     if (v !== null) cScoresForVis[k] = v;
   }
   const subVis = getSubTriggerVisibility(cScoresForVis);
+
+  // ── Derived: consistency flags ──
+  const firedFlags = useMemo(() => {
+    // Build scores record (both C and R, numeric)
+    const allScores: Record<string, number> = {};
+    for (const [k, v] of Object.entries(cScores)) {
+      if (v !== null) allScores[k] = v;
+    }
+    for (const [k, v] of Object.entries(rScores)) {
+      if (v !== null) allScores[k] = v;
+    }
+
+    // Build text record: basic data fields + all justifications
+    const allTexts: Record<string, string> = {
+      toolPurpose: basicData.toolPurpose ?? "",
+      toolProblem: basicData.toolProblem ?? "",
+      ...cJustifications,
+      ...rJustifications,
+    };
+
+    return evaluateFlags(allScores, allTexts, basicData.category);
+  }, [cScores, rScores, cJustifications, rJustifications, basicData]);
+
+  // Group fired flags by target dimension
+  const flagsByDimension = useMemo(() => {
+    const grouped: Record<string, FiredFlag[]> = {};
+    for (const f of firedFlags) {
+      if (!grouped[f.targetDimension]) grouped[f.targetDimension] = [];
+      grouped[f.targetDimension].push(f);
+    }
+    return grouped;
+  }, [firedFlags]);
 
   // ── Handlers ──
   function handleBasicDataNext(data: BasicData) {
@@ -64,18 +116,56 @@ export default function SelectionTool() {
     const floor = floors[dimId] ?? 0;
     const effective = applyFloor(score, floor) as Score;
     setCScores((prev) => ({ ...prev, [dimId]: effective }));
+    // Clear unknown state when scoring
+    setCUnknowns((prev) => ({ ...prev, [dimId]: false }));
   }
 
   function handleRScore(dimId: string, score: Score) {
     setRScores((prev) => ({ ...prev, [dimId]: score }));
+    setRUnknowns((prev) => ({ ...prev, [dimId]: false }));
   }
 
   function handleSubAnswer(field: keyof SubTriggerAnswers, value: boolean) {
     setSubAnswers((prev) => ({ ...prev, [field]: value }));
   }
 
+  // Justification handlers with "I don't know" detection
+  function handleCJustification(dimId: string, text: string) {
+    setCJustifications((prev) => ({ ...prev, [dimId]: text }));
+    if (containsIDontKnow(text)) {
+      setCUnknowns((prev) => ({ ...prev, [dimId]: true }));
+      setCScores((prev) => ({ ...prev, [dimId]: null }));
+    }
+  }
+
+  function handleRJustification(dimId: string, text: string) {
+    setRJustifications((prev) => ({ ...prev, [dimId]: text }));
+    if (containsIDontKnow(text)) {
+      setRUnknowns((prev) => ({ ...prev, [dimId]: true }));
+      setRScores((prev) => ({ ...prev, [dimId]: null }));
+    }
+  }
+
+  // "I don't know" button handlers
+  function handleCIDontKnow(dimId: string) {
+    setCUnknowns((prev) => ({ ...prev, [dimId]: true }));
+    setCScores((prev) => ({ ...prev, [dimId]: null }));
+  }
+
+  function handleRIDontKnow(dimId: string) {
+    setRUnknowns((prev) => ({ ...prev, [dimId]: true }));
+    setRScores((prev) => ({ ...prev, [dimId]: null }));
+  }
+
+  function handleCClearUnknown(dimId: string) {
+    setCUnknowns((prev) => ({ ...prev, [dimId]: false }));
+  }
+
+  function handleRClearUnknown(dimId: string) {
+    setRUnknowns((prev) => ({ ...prev, [dimId]: false }));
+  }
+
   const handleRunAssessment = useCallback(() => {
-    // Convert nullable scores to definite scores (all should be filled by this point)
     const cFinal: Record<string, Score> = {};
     const rFinal: Record<string, Score> = {};
     for (const [k, v] of Object.entries(cScores)) {
@@ -92,7 +182,14 @@ export default function SelectionTool() {
 
   function handleExport() {
     if (!assessment) return;
-    const blob = new Blob([JSON.stringify(assessment, null, 2)], {
+    // Include justifications and fired flags in export
+    const exportData = {
+      ...assessment,
+      justifications: { ...cJustifications, ...rJustifications },
+      firedFlags,
+      basicData,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
@@ -106,7 +203,11 @@ export default function SelectionTool() {
   // ── Build sub-trigger props for readiness step ──
   const readinessSubTriggers: Record<
     string,
-    { question: string; answer: boolean | undefined; onAnswer: (v: boolean) => void }
+    {
+      question: string;
+      answer: boolean | undefined;
+      onAnswer: (v: boolean) => void;
+    }
   > = {};
 
   if (subVis.showCAPAQuestion) {
@@ -135,7 +236,10 @@ export default function SelectionTool() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: NHS_COLOURS.white }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: NHS_COLOURS.white }}
+    >
       {/* Header */}
       <header
         className="px-6 py-4 border-b"
@@ -144,16 +248,23 @@ export default function SelectionTool() {
           borderColor: NHS_COLOURS.lightGrey,
         }}
       >
-        <div className="max-w-4xl mx-auto">
-          <h1
-            className="text-xl font-bold"
-            style={{ color: NHS_COLOURS.darkBlue }}
-          >
-            NHS AI Selection Tool
-          </h1>
-          <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
-            12×12 Paired Complexity–Readiness Framework
-          </p>
+        <div className="max-w-4xl mx-auto flex items-center gap-4">
+          <img
+            src="/ai-centre-logo.png"
+            alt="AI Centre for Value Based Healthcare"
+            className="h-12 w-auto"
+          />
+          <div>
+            <h1
+              className="text-xl font-bold"
+              style={{ color: NHS_COLOURS.darkBlue }}
+            >
+              NHS AI Selection Tool
+            </h1>
+            <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+              12×12 Paired Complexity–Readiness Framework
+            </p>
+          </div>
         </div>
       </header>
 
@@ -185,6 +296,12 @@ export default function SelectionTool() {
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
             nextLabel="Continue to Readiness Assessment →"
+            justifications={cJustifications}
+            onJustificationChange={handleCJustification}
+            flagsByDimension={flagsByDimension}
+            unknowns={cUnknowns}
+            onIDontKnow={handleCIDontKnow}
+            onClearUnknown={handleCClearUnknown}
           />
         )}
 
@@ -194,12 +311,18 @@ export default function SelectionTool() {
             description="Score each dimension based on the deploying organisation's current capabilities. Higher scores indicate greater readiness."
             dimensions={readinessDimensions}
             scores={rScores}
-            side="readiness"
             onScore={handleRScore}
             onBack={() => setStep(2)}
             onNext={handleRunAssessment}
             nextLabel="Calculate Results →"
+            side="readiness"
             subTriggers={readinessSubTriggers}
+            justifications={rJustifications}
+            onJustificationChange={handleRJustification}
+            flagsByDimension={flagsByDimension}
+            unknowns={rUnknowns}
+            onIDontKnow={handleRIDontKnow}
+            onClearUnknown={handleRClearUnknown}
           />
         )}
 

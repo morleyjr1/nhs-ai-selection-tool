@@ -1,8 +1,9 @@
 "use client";
 
-import type { Dimension, DimensionSide } from "../lib/dimensions";
+import type { Dimension } from "../lib/dimensions";
 import type { Score } from "../lib/types";
 import { NHS_COLOURS } from "../lib/constants";
+import type { FiredFlag } from "../lib/flags";
 import DimensionCard from "./DimensionCard";
 
 interface ScoringStepProps {
@@ -15,7 +16,8 @@ interface ScoringStepProps {
   onNext: () => void;
   onBack: () => void;
   nextLabel: string;
-  side?: DimensionSide;
+  /** Which side of the framework — controls score colour direction */
+  side?: "complexity" | "readiness";
   /** Sub-trigger configuration: map of dimension ID → sub-trigger props */
   subTriggers?: Record<
     string,
@@ -25,6 +27,15 @@ interface ScoringStepProps {
       onAnswer: (value: boolean) => void;
     }
   >;
+  /** Free-text justifications keyed by dimension ID */
+  justifications?: Record<string, string>;
+  onJustificationChange?: (dimensionId: string, text: string) => void;
+  /** Consistency flags keyed by dimension ID */
+  flagsByDimension?: Record<string, FiredFlag[]>;
+  /** "I don't know" state keyed by dimension ID */
+  unknowns?: Record<string, boolean>;
+  onIDontKnow?: (dimensionId: string) => void;
+  onClearUnknown?: (dimensionId: string) => void;
 }
 
 export default function ScoringStep({
@@ -39,29 +50,60 @@ export default function ScoringStep({
   nextLabel,
   side = "complexity",
   subTriggers = {},
+  justifications = {},
+  onJustificationChange,
+  flagsByDimension = {},
+  unknowns = {},
+  onIDontKnow,
+  onClearUnknown,
 }: ScoringStepProps) {
-  const allScored = dimensions.every((d) => scores[d.id] !== null && scores[d.id] !== undefined);
+  const allScored = dimensions.every(
+    (d) =>
+      (scores[d.id] !== null && scores[d.id] !== undefined) ||
+      unknowns[d.id],
+  );
   const scoredCount = dimensions.filter(
     (d) => scores[d.id] !== null && scores[d.id] !== undefined,
   ).length;
+  const unknownCount = dimensions.filter((d) => unknowns[d.id]).length;
+
+  // Can only proceed if all dimensions are scored (not unknown)
+  const hasUnknowns = unknownCount > 0;
+  const canProceed = scoredCount === dimensions.length && !hasUnknowns;
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-2xl font-bold" style={{ color: NHS_COLOURS.darkBlue }}>
+        <h2
+          className="text-2xl font-bold"
+          style={{ color: NHS_COLOURS.darkBlue }}
+        >
           {title}
         </h2>
-        <span
-          className="text-sm font-medium px-3 py-1 rounded-full"
-          style={{
-            backgroundColor: allScored
-              ? NHS_COLOURS.green + "20"
-              : NHS_COLOURS.lightGrey,
-            color: allScored ? NHS_COLOURS.green : NHS_COLOURS.grey,
-          }}
-        >
-          {scoredCount} / {dimensions.length} scored
-        </span>
+        <div className="flex items-center gap-2">
+          {unknownCount > 0 && (
+            <span
+              className="text-sm font-medium px-3 py-1 rounded-full"
+              style={{
+                backgroundColor: NHS_COLOURS.grey + "20",
+                color: NHS_COLOURS.grey,
+              }}
+            >
+              {unknownCount} unknown
+            </span>
+          )}
+          <span
+            className="text-sm font-medium px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: canProceed
+                ? NHS_COLOURS.green + "20"
+                : NHS_COLOURS.lightGrey,
+              color: canProceed ? NHS_COLOURS.green : NHS_COLOURS.grey,
+            }}
+          >
+            {scoredCount} / {dimensions.length} scored
+          </span>
+        </div>
       </div>
       <p className="mb-8" style={{ color: NHS_COLOURS.secondaryText }}>
         {description}
@@ -74,11 +116,40 @@ export default function ScoringStep({
           dimension={dim}
           score={scores[dim.id] ?? null}
           floor={floors[dim.id] ?? 0}
-          side={side}
           onScore={(s) => onScore(dim.id, s)}
+          side={side}
           subTrigger={subTriggers[dim.id]}
+          justification={justifications[dim.id] ?? ""}
+          onJustificationChange={
+            onJustificationChange
+              ? (text) => onJustificationChange(dim.id, text)
+              : undefined
+          }
+          flags={flagsByDimension[dim.id] ?? []}
+          isUnknown={unknowns[dim.id] ?? false}
+          onIDontKnow={onIDontKnow ? () => onIDontKnow(dim.id) : undefined}
+          onClearUnknown={
+            onClearUnknown ? () => onClearUnknown(dim.id) : undefined
+          }
         />
       ))}
+
+      {/* Warning if unknowns exist */}
+      {hasUnknowns && (
+        <div
+          className="rounded-lg p-4 mb-4 border-l-4"
+          style={{
+            backgroundColor: NHS_COLOURS.lightGrey,
+            borderLeftColor: NHS_COLOURS.grey,
+          }}
+        >
+          <p className="text-sm" style={{ color: NHS_COLOURS.darkText }}>
+            <span className="font-semibold">{unknownCount} dimension{unknownCount > 1 ? "s" : ""} marked as &ldquo;I don&apos;t know&rdquo;.</span>{" "}
+            The assessment cannot be finalised until every dimension is scored.
+            Go back to the unscored dimensions and gather the information needed.
+          </p>
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between mt-10">
@@ -95,13 +166,13 @@ export default function ScoringStep({
         </button>
         <button
           onClick={onNext}
-          disabled={!allScored}
+          disabled={!canProceed}
           className="px-8 py-3 rounded font-medium text-sm transition-opacity"
           style={{
-            backgroundColor: allScored ? NHS_COLOURS.blue : NHS_COLOURS.grey,
+            backgroundColor: canProceed ? NHS_COLOURS.blue : NHS_COLOURS.grey,
             color: NHS_COLOURS.white,
-            opacity: allScored ? 1 : 0.5,
-            cursor: allScored ? "pointer" : "not-allowed",
+            opacity: canProceed ? 1 : 0.5,
+            cursor: canProceed ? "pointer" : "not-allowed",
           }}
         >
           {nextLabel}

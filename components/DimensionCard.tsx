@@ -3,40 +3,73 @@
 import { useState } from "react";
 import type { Dimension } from "../lib/dimensions";
 import type { Score } from "../lib/types";
-import type { DimensionSide } from "../lib/dimensions";
-import { NHS_COLOURS, SCORE_COLOURS, READINESS_SCORE_COLOURS } from "../lib/constants";
+import {
+  NHS_COLOURS,
+  SCORE_COLOURS,
+  READINESS_SCORE_COLOURS,
+} from "../lib/constants";
+import type { FiredFlag } from "../lib/flags";
 
 interface DimensionCardProps {
   dimension: Dimension;
   score: Score | null;
   floor?: number;
-  side?: DimensionSide;
   onScore: (score: Score) => void;
+  /** Which side of the framework — controls colour direction */
+  side?: "complexity" | "readiness";
   /** Optional sub-trigger question (rendered below the score buttons) */
   subTrigger?: {
     question: string;
     answer: boolean | undefined;
     onAnswer: (value: boolean) => void;
   };
+  /** Free-text justification for this score */
+  justification?: string;
+  onJustificationChange?: (text: string) => void;
+  /** Consistency flags firing on this dimension */
+  flags?: FiredFlag[];
+  /** Whether the "I don't know" state is active */
+  isUnknown?: boolean;
+  onIDontKnow?: () => void;
+  /** Callback to clear the "I don't know" state (when user scores) */
+  onClearUnknown?: () => void;
 }
 
 export default function DimensionCard({
   dimension,
   score,
   floor = 0,
-  side = "complexity",
   onScore,
+  side = "complexity",
   subTrigger,
+  justification = "",
+  onJustificationChange,
+  flags = [],
+  isUnknown = false,
+  onIDontKnow,
+  onClearUnknown,
 }: DimensionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const scores: Score[] = [1, 2, 3];
-  const colourMap = side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
+  const colourMap =
+    side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
+
+  function handleScore(s: Score) {
+    if (isUnknown && onClearUnknown) {
+      onClearUnknown();
+    }
+    onScore(s);
+  }
 
   return (
     <div
       className="rounded-lg p-5 mb-4 border"
       style={{
-        borderColor: score ? colourMap[score] : NHS_COLOURS.lightGrey,
+        borderColor: isUnknown
+          ? NHS_COLOURS.grey
+          : score
+            ? colourMap[score]
+            : NHS_COLOURS.lightGrey,
         backgroundColor: NHS_COLOURS.white,
       }}
     >
@@ -58,18 +91,32 @@ export default function DimensionCard({
             </p>
           )}
         </div>
-        {floor > 0 && (
-          <span
-            className="ml-3 px-2 py-1 rounded text-xs font-semibold shrink-0"
-            style={{
-              backgroundColor: NHS_COLOURS.amber + "20",
-              color: NHS_COLOURS.amber,
-              border: `1px solid ${NHS_COLOURS.amber}`,
-            }}
-          >
-            Floor: ≥{floor}
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          {floor > 0 && (
+            <span
+              className="px-2 py-1 rounded text-xs font-semibold"
+              style={{
+                backgroundColor: NHS_COLOURS.amber + "20",
+                color: NHS_COLOURS.amber,
+                border: `1px solid ${NHS_COLOURS.amber}`,
+              }}
+            >
+              Floor: ≥{floor}
+            </span>
+          )}
+          {isUnknown && (
+            <span
+              className="px-2 py-1 rounded text-xs font-semibold"
+              style={{
+                backgroundColor: NHS_COLOURS.lightGrey,
+                color: NHS_COLOURS.grey,
+                border: `1px solid ${NHS_COLOURS.grey}`,
+              }}
+            >
+              ?
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Guiding questions */}
@@ -98,24 +145,49 @@ export default function DimensionCard({
         </p>
       )}
 
-      {/* Score buttons */}
+      {/* "I don't know" hard stop banner */}
+      {isUnknown && (
+        <div
+          className="rounded-lg p-4 mb-3 border-l-4"
+          style={{
+            backgroundColor: NHS_COLOURS.lightGrey,
+            borderLeftColor: NHS_COLOURS.grey,
+          }}
+        >
+          <p
+            className="font-semibold text-sm mb-1"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            This assessment isn&apos;t ready to be made yet
+          </p>
+          <p className="text-sm" style={{ color: NHS_COLOURS.secondaryText }}>
+            Before scoring this dimension, go and find out the answer — speak to
+            the vendor, check the technical documentation, or consult the
+            relevant person in your organisation. You can come back to this
+            dimension at any time. The assessment can&apos;t be finalised until
+            every dimension is scored.
+          </p>
+        </div>
+      )}
+
+      {/* Score buttons + "I don't know" */}
       <div className="flex gap-2 mb-3">
         {scores.map((s) => {
           const isDisabled = s < floor;
-          const isSelected = score === s;
+          const isSelected = score === s && !isUnknown;
           const colour = colourMap[s];
 
           return (
             <button
               key={s}
-              onClick={() => !isDisabled && onScore(s)}
+              onClick={() => !isDisabled && handleScore(s)}
               disabled={isDisabled}
               className="flex-1 py-2 rounded text-sm font-medium transition-all"
               style={{
                 backgroundColor: isSelected ? colour : NHS_COLOURS.white,
                 color: isSelected ? NHS_COLOURS.white : colour,
                 border: `2px solid ${isDisabled ? NHS_COLOURS.lightGrey : colour}`,
-                opacity: isDisabled ? 0.3 : 1,
+                opacity: isDisabled ? 0.3 : isUnknown ? 0.5 : 1,
                 cursor: isDisabled ? "not-allowed" : "pointer",
               }}
             >
@@ -123,10 +195,23 @@ export default function DimensionCard({
             </button>
           );
         })}
+        {onIDontKnow && (
+          <button
+            onClick={onIDontKnow}
+            className="px-3 py-2 rounded text-sm font-medium transition-all"
+            style={{
+              backgroundColor: isUnknown ? NHS_COLOURS.grey : NHS_COLOURS.white,
+              color: isUnknown ? NHS_COLOURS.white : NHS_COLOURS.grey,
+              border: `2px solid ${NHS_COLOURS.grey}`,
+            }}
+          >
+            I don&apos;t know
+          </button>
+        )}
       </div>
 
       {/* Selected score descriptor */}
-      {score && (
+      {score && !isUnknown && (
         <div
           className="rounded px-3 py-2 mb-3 text-sm"
           style={{
@@ -139,6 +224,41 @@ export default function DimensionCard({
           {dimension.scoreDescriptors[score - 1]?.description}
         </div>
       )}
+
+      {/* Free-text justification */}
+      {onJustificationChange && (
+        <div className="mb-3">
+          <textarea
+            value={justification}
+            onChange={(e) => onJustificationChange(e.target.value)}
+            rows={2}
+            placeholder="Brief reasoning for this score (optional)"
+            className="w-full px-3 py-2 rounded border text-sm"
+            style={{
+              borderColor: NHS_COLOURS.lightGrey,
+              color: NHS_COLOURS.darkText,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Consistency flag banners */}
+      {flags.length > 0 &&
+        flags.map((flag) => (
+          <div
+            key={flag.flagId}
+            className="rounded px-4 py-3 mb-2 border-l-4 flex items-start gap-2"
+            style={{
+              backgroundColor: NHS_COLOURS.amber + "15",
+              borderLeftColor: NHS_COLOURS.amber,
+            }}
+          >
+            <span className="text-base mt-0.5">⚠</span>
+            <p className="text-sm" style={{ color: NHS_COLOURS.darkText }}>
+              {flag.message}
+            </p>
+          </div>
+        ))}
 
       {/* Sub-trigger question (conditional) */}
       {subTrigger && (
