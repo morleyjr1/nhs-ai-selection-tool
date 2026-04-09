@@ -19,7 +19,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           <img
             src="/ai-centre-logo.png"
             alt="AI Centre for Value Based Healthcare"
-            className="h-24 w-auto mx-auto mb-8"
+            className="h-56 w-auto mx-auto mb-8"
           />
 
           {/* Title */}
