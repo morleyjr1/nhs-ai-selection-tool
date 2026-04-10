@@ -7,12 +7,18 @@ interface ProgressBarProps {
 }
 
 export default function ProgressBar({ currentStep }: ProgressBarProps) {
+  const lastStepIndex = STEP_LABELS.length - 1;
+
   return (
     <nav aria-label="Assessment progress" className="w-full mb-8">
       <ol className="flex items-center gap-0">
         {STEP_LABELS.map((label, index) => {
           const isComplete = index < currentStep;
           const isCurrent = index === currentStep;
+          // The final step (Results) should appear filled/complete when
+          // the user has reached it — they have finished the assessment.
+          const isFinalAndReached = index === lastStepIndex && isCurrent;
+          const showAsComplete = isComplete || isFinalAndReached;
 
           return (
             <li key={label} className="flex-1 flex flex-col items-center">
@@ -23,7 +29,7 @@ export default function ProgressBar({ currentStep }: ProgressBarProps) {
                   <div
                     className="flex-1 h-0.5"
                     style={{
-                      backgroundColor: isComplete
+                      backgroundColor: showAsComplete
                         ? NHS_COLOURS.blue
                         : NHS_COLOURS.lightGrey,
                     }}
@@ -35,44 +41,44 @@ export default function ProgressBar({ currentStep }: ProgressBarProps) {
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
                   style={{
-                    backgroundColor: isComplete
+                    backgroundColor: showAsComplete
                       ? NHS_COLOURS.blue
                       : isCurrent
                         ? NHS_COLOURS.white
                         : NHS_COLOURS.lightGrey,
-                    color: isComplete
+                    color: showAsComplete
                       ? NHS_COLOURS.white
                       : isCurrent
                         ? NHS_COLOURS.blue
                         : NHS_COLOURS.grey,
-                    border: isCurrent
+                    border: isCurrent && !isFinalAndReached
                       ? `2px solid ${NHS_COLOURS.blue}`
                       : "2px solid transparent",
                   }}
                   aria-current={isCurrent ? "step" : undefined}
                 >
-                  {isComplete ? "✓" : index + 1}
+                  {showAsComplete ? "✓" : index + 1}
                 </div>
 
                 {/* Right connector line */}
-                {index < STEP_LABELS.length - 1 && (
+                {index < lastStepIndex && (
                   <div
                     className="flex-1 h-0.5"
                     style={{
-                      backgroundColor: isComplete
+                      backgroundColor: showAsComplete
                         ? NHS_COLOURS.blue
                         : NHS_COLOURS.lightGrey,
                     }}
                   />
                 )}
-                {index === STEP_LABELS.length - 1 && <div className="flex-1" />}
+                {index === lastStepIndex && <div className="flex-1" />}
               </div>
 
               {/* Label */}
               <span
                 className="mt-2 text-xs font-medium text-center"
                 style={{
-                  color: isComplete || isCurrent ? NHS_COLOURS.blue : NHS_COLOURS.grey,
+                  color: showAsComplete || isCurrent ? NHS_COLOURS.blue : NHS_COLOURS.grey,
                 }}
               >
                 {label}
