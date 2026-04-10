@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import type { Dimension } from "../lib/dimensions";
-import type { Score } from "../lib/types";
+import type { Score, BasicData } from "../lib/types";
 import {
   NHS_COLOURS,
   SCORE_COLOURS,
   READINESS_SCORE_COLOURS,
 } from "../lib/constants";
 import type { FiredFlag } from "../lib/flags";
+import { getFloorExplanation } from "../lib/floors";
 
 interface MismatchResult {
   mismatch: boolean;
@@ -21,6 +22,8 @@ interface DimensionCardProps {
   dimension: Dimension;
   score: Score | null;
   floor?: number;
+  /** BasicData used to compute dynamic floor explanations */
+  basicData?: BasicData;
   onScore: (score: Score) => void;
   /** Which side of the framework — controls colour direction */
   side?: "complexity" | "readiness";
@@ -46,6 +49,7 @@ export default function DimensionCard({
   dimension,
   score,
   floor = 0,
+  basicData,
   onScore,
   side = "complexity",
   subTrigger,
@@ -211,6 +215,37 @@ export default function DimensionCard({
           {dimension.scoringNote}
         </p>
       )}
+
+      {/* Floor explanation note — dynamic, based on tool properties */}
+      {floor > 0 && basicData && (() => {
+        const explanation = getFloorExplanation(basicData, dimension.id, floor);
+        if (!explanation) return null;
+        return (
+          <div
+            className="rounded px-4 py-3 mb-3 border-l-4"
+            style={{
+              backgroundColor: NHS_COLOURS.amber + "10",
+              borderLeftColor: NHS_COLOURS.amber,
+            }}
+          >
+            <p
+              className="text-sm mb-1"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              {explanation.summary}
+            </p>
+            {explanation.reasons.map((reason, i) => (
+              <p
+                key={i}
+                className="text-xs mt-1"
+                style={{ color: NHS_COLOURS.secondaryText }}
+              >
+                {reason}
+              </p>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* "I don't know" hard stop banner */}
       {isUnknown && (

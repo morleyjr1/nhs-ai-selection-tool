@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dimension } from "../lib/dimensions";
-import type { Score } from "../lib/types";
+import type { Score, BasicData } from "../lib/types";
 import { NHS_COLOURS } from "../lib/constants";
 import type { FiredFlag } from "../lib/flags";
 import DimensionCard from "./DimensionCard";
@@ -12,6 +12,8 @@ interface ScoringStepProps {
   dimensions: Dimension[];
   scores: Record<string, Score | null>;
   floors?: Record<string, number>;
+  /** BasicData needed to compute dynamic floor explanations */
+  basicData?: BasicData;
   onScore: (dimensionId: string, score: Score) => void;
   onNext: () => void;
   onBack: () => void;
@@ -44,6 +46,7 @@ export default function ScoringStep({
   dimensions,
   scores,
   floors = {},
+  basicData,
   onScore,
   onNext,
   onBack,
@@ -116,6 +119,7 @@ export default function ScoringStep({
           dimension={dim}
           score={scores[dim.id] ?? null}
           floor={floors[dim.id] ?? 0}
+          basicData={basicData}
           onScore={(s) => onScore(dim.id, s)}
           side={side}
           subTrigger={subTriggers[dim.id]}

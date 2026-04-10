@@ -133,3 +133,56 @@ export function getFloorLabels(
     (rule) => rule.dimension === dimensionId && rule.condition(data)
   ).map((rule) => rule.label);
 }
+
+/** Human-readable explanations for why each property triggers a floor. */
+const FLOOR_EXPLANATIONS: Record<string, string> = {
+  "Stochastic (Q10)":
+    "Stochastic tools produce variable outputs from the same input, requiring heightened scrutiny of validation, oversight, and monitoring processes.",
+  "Autonomous clinical function (Q4)":
+    "Autonomous tools operate without mandatory human review before action, raising the minimum bar for oversight and safety assurance.",
+  "Class IIb device (Q8)":
+    "Medium-risk medical devices (Class IIb) carry elevated safety consequences, requiring a higher baseline for safety assurance.",
+  "Class III device (Q8)":
+    "High-risk medical devices (Class III) carry the highest safety consequences; the maximum safety assurance floor applies.",
+};
+
+/**
+ * Returns a structured explanation of why floors are applied to a given
+ * dimension, suitable for display in the scoring UI.
+ *
+ * Returns null if no floors apply.
+ */
+export function getFloorExplanation(
+  data: BasicData,
+  dimensionId: string,
+  floor: number,
+): { summary: string; reasons: string[] } | null {
+  const firedRules = FLOOR_RULES.filter(
+    (rule) => rule.dimension === dimensionId && rule.condition(data),
+  );
+
+  if (firedRules.length === 0) return null;
+
+  const reasons = firedRules.map(
+    (rule) =>
+      FLOOR_EXPLANATIONS[rule.label] ?? `Triggered by: ${rule.label}`,
+  );
+
+  const labels = firedRules.map((r) => r.label);
+  const summary = `This dimension has an automatic floor of ≥${floor} because ${joinLabels(labels)}. Scores below ${floor} are not available.`;
+
+  return { summary, reasons };
+}
+
+/** Join labels naturally: "A", "A and B", "A, B, and C". */
+function joinLabels(labels: string[]): string {
+  const unique = [...new Set(labels)];
+  if (unique.length === 1) return `the tool is ${unique[0].toLowerCase()}`;
+  if (unique.length === 2)
+    return `the tool is ${unique[0].toLowerCase()} and ${unique[1].toLowerCase()}`;
+  return (
+    unique.slice(0, -1).map((l) => l.toLowerCase()).join(", ") +
+    ", and " +
+    unique[unique.length - 1].toLowerCase()
+  );
+}

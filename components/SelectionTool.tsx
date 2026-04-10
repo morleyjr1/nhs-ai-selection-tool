@@ -454,6 +454,7 @@ export default function SelectionTool() {
             dimensions={complexityDimensions}
             scores={cScores}
             floors={floors}
+            basicData={basicData}
             onScore={handleCScore}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
