@@ -163,6 +163,18 @@ export default function SelectionTool() {
     setShowLanding(false);
   }
 
+  // ── Scroll to top on step change ──
+  useEffect(() => {
+    // Use setTimeout(0) to ensure the new step's DOM has rendered before
+    // scrolling, and fall back to scrollTo(0,0) for maximum compatibility.
+    const id = setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 0);
+    return () => clearTimeout(id);
+  }, [step]);
+
   // ── Debounced lookup ──
   useEffect(() => {
     const toolName = lookupToolName.trim();
