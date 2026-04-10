@@ -1,11 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import type { AssessmentResult } from "../lib/classify";
 import type { BasicData } from "../lib/types";
 import type { LookupResults } from "../lib/lookup";
 import type { FiredFlag } from "../lib/flags";
 import { NHS_COLOURS, CLASSIFICATION_COLOURS } from "../lib/constants";
 import { generatePDFReport } from "../lib/pdf-report";
+import { generateRecommendation } from "../lib/recommendation";
 import GapMap from "./GapMap";
 
 interface ResultsStepProps {
@@ -32,6 +34,12 @@ export default function ResultsStep({
   const classColour =
     CLASSIFICATION_COLOURS[assessment.classification] ?? NHS_COLOURS.grey;
 
+  // Generate recommendation summary
+  const recommendation = useMemo(
+    () => generateRecommendation(assessment, basicData),
+    [assessment, basicData],
+  );
+
   function handleExportPDF() {
     generatePDFReport({
       assessment,
@@ -40,7 +48,6 @@ export default function ResultsStep({
       firedFlags,
       lookupResults,
     });
-    // Clear saved state after export
     onClearSave?.();
   }
 
@@ -75,6 +82,69 @@ export default function ResultsStep({
         >
           {assessment.classification}
         </span>
+      </div>
+
+      {/* ── Recommendation Summary ── */}
+      <div
+        className="rounded-lg p-6 mb-8 border-l-4"
+        style={{
+          backgroundColor: classColour + "08",
+          borderLeftColor: classColour,
+        }}
+      >
+        <h3
+          className="font-semibold mb-3"
+          style={{ color: NHS_COLOURS.darkBlue }}
+        >
+          Recommendation Summary
+        </h3>
+        <p
+          className="text-sm font-semibold mb-2"
+          style={{ color: NHS_COLOURS.darkText }}
+        >
+          {recommendation.headline}
+        </p>
+        <p
+          className="text-sm mb-3 leading-relaxed"
+          style={{ color: NHS_COLOURS.secondaryText }}
+        >
+          {recommendation.rationale}
+        </p>
+
+        {recommendation.priorityActions.length > 0 && (
+          <>
+            <p
+              className="text-sm font-semibold mb-2"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              Priority actions:
+            </p>
+            <ol className="space-y-1.5 mb-3">
+              {recommendation.priorityActions.map((action, i) => (
+                <li
+                  key={i}
+                  className="text-sm leading-relaxed flex gap-2"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  <span
+                    className="font-semibold shrink-0"
+                    style={{ color: NHS_COLOURS.darkText }}
+                  >
+                    {i + 1}.
+                  </span>
+                  <span>{action}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: NHS_COLOURS.secondaryText }}
+        >
+          {recommendation.closing}
+        </p>
       </div>
 
       {/* Hard gate warnings */}

@@ -13,6 +13,7 @@ import type { BasicData } from "./types";
 import type { LookupResults } from "./lookup";
 import type { FiredFlag } from "./flags";
 import { complexityDimensions, readinessDimensions } from "./dimensions";
+import { generateRecommendation } from "./recommendation";
 
 // NHS colour palette (RGB)
 const NHS_BLUE: [number, number, number] = [0, 94, 184];
@@ -129,6 +130,75 @@ export function generatePDFReport(data: ReportData): void {
   const statsText = `Major gaps: ${assessment.majorGaps}  |  Minor gaps: ${assessment.minorGaps}  |  Average complexity: ${assessment.avgComplexity.toFixed(1)}`;
   doc.text(statsText, pageWidth / 2, y, { align: "center" });
   y += 10;
+
+  // ── Recommendation Summary ──
+
+  const recommendation = generateRecommendation(assessment, basicData);
+
+  // Light background box for the recommendation
+  const recStartY = y;
+  // Estimate height needed
+  const headlineLines = doc.splitTextToSize(recommendation.headline, contentWidth - 10);
+  const rationaleLines = doc.splitTextToSize(recommendation.rationale, contentWidth - 10);
+  const actionLines = recommendation.priorityActions.flatMap((a, i) =>
+    doc.splitTextToSize(`${i + 1}. ${a}`, contentWidth - 14),
+  );
+  const closingLines = doc.splitTextToSize(recommendation.closing, contentWidth - 10);
+  const totalRecLines =
+    headlineLines.length + rationaleLines.length + actionLines.length + closingLines.length;
+  const recHeight = totalRecLines * 4 + 20; // padding
+
+  checkPage(recHeight);
+
+  // Draw background
+  doc.setFillColor(
+    ...classColour.map((c) => Math.min(255, c + 200)) as [number, number, number],
+  );
+  doc.setDrawColor(...classColour);
+  doc.roundedRect(margin, y, contentWidth, recHeight, 2, 2, "FD");
+  y += 5;
+
+  // Heading
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...NHS_DARK_BLUE);
+  doc.text("Recommendation Summary", margin + 5, y);
+  y += 6;
+
+  // Headline
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...DARK_TEXT);
+  doc.text(headlineLines, margin + 5, y);
+  y += headlineLines.length * 4 + 2;
+
+  // Rationale
+  doc.setFont("helvetica", "normal");
+  doc.text(rationaleLines, margin + 5, y);
+  y += rationaleLines.length * 4 + 2;
+
+  // Priority actions
+  if (recommendation.priorityActions.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Priority actions:", margin + 5, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    recommendation.priorityActions.forEach((action, i) => {
+      const lines = doc.splitTextToSize(`${i + 1}. ${action}`, contentWidth - 14);
+      doc.text(lines, margin + 7, y);
+      y += lines.length * 4 + 1;
+    });
+    y += 1;
+  }
+
+  // Closing
+  doc.setFont("helvetica", "italic");
+  doc.text(closingLines, margin + 5, y);
+  y += closingLines.length * 4 + 5;
+
+  // Ensure y is past the box
+  y = Math.max(y, recStartY + recHeight + 4);
+  spacer(4);
 
   // ── Basic Data ──
 
