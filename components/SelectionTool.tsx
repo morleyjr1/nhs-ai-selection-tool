@@ -418,23 +418,31 @@ export default function SelectionTool() {
           borderColor: NHS_COLOURS.lightGrey,
         }}
       >
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <img
-            src="/ai-centre-logo.png"
-            alt="AI Centre for Value Based Healthcare"
-            className="h-12 w-auto"
-          />
-          <div>
-            <h1
-              className="text-xl font-bold"
-              style={{ color: NHS_COLOURS.darkBlue }}
-            >
-              NHS AI Adoption Assessment Tool
-            </h1>
-            <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
-              12×12 Paired Complexity–Readiness Framework
-            </p>
-          </div>
+        <div className="max-w-4xl mx-auto">
+          <button
+            type="button"
+            onClick={() => setShowLanding(true)}
+            className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ background: "none", border: "none", padding: 0 }}
+            title="Return to landing page"
+          >
+            <img
+              src="/ai-centre-logo.png"
+              alt="AI Centre for Value Based Healthcare"
+              className="h-12 w-auto"
+            />
+            <div className="text-left">
+              <h1
+                className="text-xl font-bold"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                NHS AI Adoption Assessment Tool
+              </h1>
+              <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+                12×12 Paired Complexity–Readiness Framework
+              </p>
+            </div>
+          </button>
         </div>
       </header>
 
