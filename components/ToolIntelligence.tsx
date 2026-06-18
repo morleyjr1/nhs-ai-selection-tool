@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { LookupResults, SmartLink } from "../lib/lookup";
+import type { LookupResults, SmartLink, WebResult } from "../lib/lookup";
+import type { AssuranceLink } from "../lib/assurance";
 import { NHS_COLOURS } from "../lib/constants";
 
 interface ToolIntelligenceProps {
@@ -113,6 +114,65 @@ export default function ToolIntelligence({
                     ))}
                 </Section>
               )}
+
+              {/* ── Security, data protection & standards ── */}
+              <Section title="Security, data protection & standards">
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  Most of these are{" "}
+                  <strong>about the company</strong>, not this specific product —
+                  a vendor holding a certificate does not by itself assure the
+                  tool you are assessing. Items marked{" "}
+                  <span
+                    className="px-1 py-0.5 rounded text-white"
+                    style={{ backgroundColor: NHS_COLOURS.blue, fontSize: "9px" }}
+                  >
+                    PRODUCT
+                  </span>{" "}
+                  relate to the tool itself.
+                </p>
+
+                {results.assurance.status === "no_api_key" && (
+                  <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+                    Inline standards search is not configured (no Brave Search API
+                    key) — the register and search links below still work.
+                  </p>
+                )}
+
+                {results.assuranceLinks
+                  .filter((l) => l.level === "company")
+                  .map((item) => (
+                    <AssuranceItem
+                      key={item.id}
+                      item={item}
+                      autoResults={
+                        item.autoKey === "iso"
+                          ? results.assurance.iso
+                          : item.autoKey === "clinicalSafety"
+                            ? results.assurance.clinicalSafety
+                            : []
+                      }
+                    />
+                  ))}
+
+                {results.assuranceLinks
+                  .filter((l) => l.level === "product")
+                  .map((item) => (
+                    <AssuranceItem
+                      key={item.id}
+                      item={item}
+                      autoResults={
+                        item.autoKey === "iso"
+                          ? results.assurance.iso
+                          : item.autoKey === "clinicalSafety"
+                            ? results.assurance.clinicalSafety
+                            : []
+                      }
+                    />
+                  ))}
+              </Section>
 
               {/* ── Evidence Base ── */}
               <Section title="Evidence Base">
@@ -368,6 +428,89 @@ function StatusRow({
               : notFoundText}
         </span>
       </div>
+    </div>
+  );
+}
+
+/**
+ * One assurance signal: label + level badge, plain-language "what it indicates",
+ * a link to the official register or a constrained web search, and (where
+ * available) inline auto-search results.
+ */
+function AssuranceItem({
+  item,
+  autoResults,
+}: {
+  item: AssuranceLink;
+  autoResults: WebResult[];
+}) {
+  return (
+    <div
+      className="rounded-md px-4 py-3"
+      style={{
+        backgroundColor: NHS_COLOURS.white,
+        border: `1px solid ${NHS_COLOURS.lightGrey}`,
+      }}
+    >
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="text-sm font-semibold"
+          style={{ color: NHS_COLOURS.darkText }}
+        >
+          {item.label}
+        </span>
+        <span
+          className="px-1.5 py-0.5 rounded text-white font-semibold"
+          style={{
+            backgroundColor:
+              item.level === "product" ? NHS_COLOURS.blue : NHS_COLOURS.grey,
+            fontSize: "9px",
+          }}
+        >
+          {item.level === "product" ? "PRODUCT" : "COMPANY"}
+        </span>
+      </div>
+      <p
+        className="text-xs mt-1 leading-relaxed"
+        style={{ color: NHS_COLOURS.secondaryText }}
+      >
+        {item.whatItIndicates}
+      </p>
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs font-medium underline mt-1.5 inline-block"
+        style={{ color: NHS_COLOURS.blue }}
+      >
+        {item.linkLabel} ↗
+      </a>
+      {item.instruction && (
+        <p className="text-xs mt-0.5" style={{ color: NHS_COLOURS.grey }}>
+          {item.instruction}
+        </p>
+      )}
+      {autoResults.length > 0 && (
+        <div className="mt-2 space-y-1.5 border-t pt-2" style={{ borderColor: NHS_COLOURS.lightGrey }}>
+          {autoResults.map((w, i) => (
+            <div key={i}>
+              <a
+                href={w.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline"
+                style={{ color: NHS_COLOURS.blue }}
+              >
+                {w.title}
+              </a>
+              <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+                {w.snippet.slice(0, 120)}
+                {w.snippet.length > 120 ? "…" : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

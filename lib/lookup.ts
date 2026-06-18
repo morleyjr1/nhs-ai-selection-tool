@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Tool Intelligence lookup — orchestration layer.
 //
-// Automated queries: FDA (static), PubMed, ClinicalTrials.gov, Brave Web.
+// Automated queries: FDA, PubMed, ClinicalTrials.gov, Brave Web (all via API routes).
 // Structured search links: NICE, EUDAMED, MHRA PARD, MHRA alerts,
 //                          NHS England, NHS Transformation Directorate.
 //
@@ -16,6 +16,8 @@
 // Both are presented prominently in the panel with clear guidance on what
 // to look for when the user clicks through.
 // ---------------------------------------------------------------------------
+
+import { buildAssuranceLinks, type AssuranceLink } from "./assurance";
 
 // ── Result types ──
 
@@ -75,23 +77,15 @@ export interface LookupResults {
   pubmed: { status: "found" | "not_found" | "error"; count: number; results: PubMedResult[]; error?: string };
   trials: { status: "found" | "not_found" | "error"; total: number; completed: number; recruiting: number; ukBased: number; results: TrialResult[]; error?: string };
   web: { status: "found" | "not_found" | "error" | "no_api_key"; results: WebResult[]; error?: string };
+  assurance: {
+    status: "found" | "not_found" | "error" | "no_api_key";
+    iso: WebResult[];
+    clinicalSafety: WebResult[];
+    error?: string;
+  };
+  /** Static security/data-protection/standards links (company- and product-level). */
+  assuranceLinks: AssuranceLink[];
   smartLinks: SmartLink[];
-}
-
-// ── FDA static search ──
-
-import fdaDevices from "./fda-devices.json";
-
-function searchFDA(toolName: string): FDAMatch[] {
-  const query = toolName.toLowerCase().trim();
-  const words = query.split(/\s+/).filter((w) => w.length > 2);
-
-  return (fdaDevices as FDAMatch[]).filter((device) => {
-    const name = device.deviceName.toLowerCase();
-    const mfr = device.manufacturer.toLowerCase();
-    if (name.includes(query) || mfr.includes(query)) return true;
-    return words.length > 1 && words.every((w) => name.includes(w) || mfr.includes(w));
-  });
 }
 
 // ── Smart links ──
@@ -167,31 +161,38 @@ export async function runLookup(
     pubmed: { status: "not_found", count: 0, results: [] },
     trials: { status: "not_found", total: 0, completed: 0, recruiting: 0, ukBased: 0, results: [] },
     web: { status: "not_found", results: [] },
+    assurance: { status: "not_found", iso: [], clinicalSafety: [] },
+    assuranceLinks: buildAssuranceLinks(toolName, manufacturer),
     smartLinks: buildSmartLinks(toolName, manufacturer),
   };
-
-  // FDA (static, synchronous)
-  try {
-    const fdaMatches = searchFDA(toolName);
-    results.fda = {
-      status: fdaMatches.length > 0 ? "found" : "not_found",
-      matches: fdaMatches,
-    };
-  } catch (e) {
-    results.fda = { status: "error", matches: [], error: String(e) };
-  }
 
   // Build a more specific query when manufacturer is known.
   const specificQuery = manufacturer
     ? `${toolName} ${manufacturer}`
     : toolName;
 
-  // PubMed, ClinicalTrials, Brave — run in parallel via API routes
-  const [pubmedRes, trialsRes, webRes] = await Promise.allSettled([
+  // FDA, PubMed, ClinicalTrials, Brave — run in parallel via API routes.
+  // FDA is served from a route (not bundled) so the ~1,500-device dataset
+  // stays server-side and out of the client bundle.
+  const [fdaRes, pubmedRes, trialsRes, webRes, assuranceRes] = await Promise.allSettled([
+    fetch(`/api/lookup/fda?q=${encodeURIComponent(toolName)}`).then((r) => r.json()),
     fetch(`/api/lookup/pubmed?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
     fetch(`/api/lookup/trials?q=${encodeURIComponent(specificQuery)}`).then((r) => r.json()),
     fetch(`/api/lookup/web?q=${encodeURIComponent(toolName)}${manufacturer ? `&mfr=${encodeURIComponent(manufacturer)}` : ""}`).then((r) => r.json()),
+    fetch(`/api/lookup/assurance?tool=${encodeURIComponent(toolName)}${manufacturer ? `&mfr=${encodeURIComponent(manufacturer)}` : ""}`).then((r) => r.json()),
   ]);
+
+  if (fdaRes.status === "fulfilled") {
+    results.fda = fdaRes.value;
+  } else {
+    results.fda = { status: "error", matches: [], error: "Request failed" };
+  }
+
+  if (assuranceRes.status === "fulfilled") {
+    results.assurance = assuranceRes.value;
+  } else {
+    results.assurance = { status: "error", iso: [], clinicalSafety: [], error: "Request failed" };
+  }
 
   if (pubmedRes.status === "fulfilled") {
     results.pubmed = pubmedRes.value;

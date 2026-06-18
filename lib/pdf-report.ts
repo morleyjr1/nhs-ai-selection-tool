@@ -484,6 +484,19 @@ export function generatePDFReport(data: ReportData): void {
       );
     }
 
+    // Security, data protection & standards (assurance)
+    {
+      const a = lookupResults.assurance;
+      const isoN = a?.iso?.length ?? 0;
+      const dcbN = a?.clinicalSafety?.length ?? 0;
+      body(
+        `Security & standards: check Cyber Essentials and NHS DSPT (company-level) and DCB0129/0160 clinical safety (product-level) directly. ` +
+          (a?.status === "found"
+            ? `Web search found ${isoN} possible ISO and ${dcbN} possible clinical-safety reference(s) — verify directly.`
+            : "No inline standards references found; verify via the register links."),
+      );
+    }
+
     spacer(4);
   }
 
