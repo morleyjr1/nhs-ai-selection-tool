@@ -79,6 +79,16 @@ export default function FramingStep({ onNext }: FramingStepProps) {
           >
             NICE Evidence Standards Framework for digital health technologies
           </a>
+          , and Question 1 of the{" "}
+          <a
+            href="https://digital.nhs.uk/services/ai-knowledge-repository/develop-ai/a-buyers-guide-to-ai-in-health-and-care"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            NHS Buyer&apos;s Guide to AI in Health and Care
+          </a>
           .
         </p>
         <div className="flex gap-3">

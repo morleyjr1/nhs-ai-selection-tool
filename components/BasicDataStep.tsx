@@ -427,6 +427,16 @@ export default function BasicDataStep({
             >
               medical devices: software applications (apps)
             </a>
+            , and Question 2 of the{" "}
+            <a
+              href="https://digital.nhs.uk/services/ai-knowledge-repository/develop-ai/a-buyers-guide-to-ai-in-health-and-care"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: NHS_COLOURS.blue }}
+            >
+              NHS Buyer&apos;s Guide to AI in Health and Care
+            </a>
             .
           </p>
 
