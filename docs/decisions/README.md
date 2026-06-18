@@ -20,3 +20,4 @@ from the code. The aim is that the *reasoning* survives, not just the diff.
 
 - [0001 — Autonomy tier and orthogonal agentic flag](./0001-autonomy-tier-and-agentic-flag.md) — *Accepted*
 - [0002 — "Who to ask" role vocabulary and per-dimension mapping](./0002-who-to-ask-role-vocabulary.md) — *Accepted*
+- [0003 — Feedback form (store-in-database)](./0003-feedback-form.md) — *Accepted*
