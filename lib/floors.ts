@@ -28,12 +28,16 @@ interface FloorRule {
 /**
  * All floor rules, derived from the PDF scoring floors table.
  *
- * | Property               | Condition                        | Floors applied              |
- * |------------------------|----------------------------------|-----------------------------|
- * | Stochastic (Q10 = 2)   | Outputs vary with same input     | C4 ≥ 2; C5 ≥ 2; C11 ≥ 2   |
- * | Autonomous (Q4 = 4)    | No mandatory human review        | C4 ≥ 2; C9 ≥ 2             |
- * | Class IIb (Q8 = 4)     | Medium-risk device               | C9 ≥ 2                     |
- * | Class III (Q8 = 5)     | High-risk device                 | C9 = 3                     |
+ * | Property                  | Condition                          | Floors applied            |
+ * |---------------------------|------------------------------------|---------------------------|
+ * | Stochastic (Q10 = 2)      | Outputs vary with same input       | C4 ≥ 2; C5 ≥ 2; C11 ≥ 2 |
+ * | Autonomous (Q4 ≥ 4)       | No mandatory human review          | C4 ≥ 2; C9 ≥ 2           |
+ * | Agentic (Q4b)             | Plans/executes multi-step actions  | C4 ≥ 2; C5 ≥ 2; C11 ≥ 2 |
+ * | Agentic AND autonomous    | Q4b AND Q4 ≥ 4                      | C4 = 3; C5 = 3; C9 = 3; C11 = 3 |
+ * | Class IIb (Q8 = 4)        | Medium-risk device                 | C9 ≥ 2                   |
+ * | Class III (Q8 = 5)        | High-risk device                   | C9 = 3                   |
+ *
+ * See docs/decisions/0001-autonomy-tier-and-agentic-flag.md.
  */
 const FLOOR_RULES: FloorRule[] = [
   // Stochastic
@@ -55,18 +59,64 @@ const FLOOR_RULES: FloorRule[] = [
     dimension: "C11",
     floor: 2,
   },
-  // Autonomous clinical function
+  // Autonomous clinical function (bounded tier 4 or fully autonomous tier 5)
   {
     label: "Autonomous clinical function (Q4)",
-    condition: (d) => d.category === 4,
+    condition: (d) => d.autonomyTier >= 4,
     dimension: "C4",
     floor: 2,
   },
   {
     label: "Autonomous clinical function (Q4)",
-    condition: (d) => d.category === 4,
+    condition: (d) => d.autonomyTier >= 4,
     dimension: "C9",
     floor: 2,
+  },
+  // Agentic — plans and executes multi-step action sequences. Effectively
+  // stochastic, so it inherits the stochastic floors even without autonomy.
+  {
+    label: "Agentic (Q4b)",
+    condition: (d) => d.agentic === true,
+    dimension: "C4",
+    floor: 2,
+  },
+  {
+    label: "Agentic (Q4b)",
+    condition: (d) => d.agentic === true,
+    dimension: "C5",
+    floor: 2,
+  },
+  {
+    label: "Agentic (Q4b)",
+    condition: (d) => d.agentic === true,
+    dimension: "C11",
+    floor: 2,
+  },
+  // Agentic AND autonomous — the highest-risk corner. The four dimensions that
+  // are intrinsically maximal for this class are hard-floored at 3.
+  {
+    label: "Agentic and autonomous",
+    condition: (d) => d.agentic === true && d.autonomyTier >= 4,
+    dimension: "C4",
+    floor: 3,
+  },
+  {
+    label: "Agentic and autonomous",
+    condition: (d) => d.agentic === true && d.autonomyTier >= 4,
+    dimension: "C5",
+    floor: 3,
+  },
+  {
+    label: "Agentic and autonomous",
+    condition: (d) => d.agentic === true && d.autonomyTier >= 4,
+    dimension: "C9",
+    floor: 3,
+  },
+  {
+    label: "Agentic and autonomous",
+    condition: (d) => d.agentic === true && d.autonomyTier >= 4,
+    dimension: "C11",
+    floor: 3,
   },
   // Class IIb
   {
@@ -140,6 +190,10 @@ const FLOOR_EXPLANATIONS: Record<string, string> = {
     "Stochastic tools produce variable outputs from the same input, requiring heightened scrutiny of validation, oversight, and monitoring processes.",
   "Autonomous clinical function (Q4)":
     "Autonomous tools operate without mandatory human review before action, raising the minimum bar for oversight and safety assurance.",
+  "Agentic (Q4b)":
+    "Agentic tools plan and execute multi-step sequences of actions, making their behaviour effectively non-deterministic and harder to verify, validate, and monitor.",
+  "Agentic and autonomous":
+    "A tool that both acts without a human gate and plans its own multi-step actions sits in the highest-risk category: oversight, validation, safety consequence, and drift detection are all maximally demanding, so each is held at the top of the scale.",
   "Class IIb device (Q8)":
     "Medium-risk medical devices (Class IIb) carry elevated safety consequences, requiring a higher baseline for safety assurance.",
   "Class III device (Q8)":

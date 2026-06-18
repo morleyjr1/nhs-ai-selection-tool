@@ -21,16 +21,19 @@ import BasicDataStep from "./BasicDataStep";
 import ScoringStep from "./ScoringStep";
 import ResultsStep from "./ResultsStep";
 
-// Category, deviceClass, and determinism start at 0 (unselected) — this is
-// outside the valid Score range but the UI enforces selection before advancing.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// autonomyTier, deviceClass, and determinism start at 0 and agentic at undefined
+// (all "unselected") — outside their valid ranges, but the UI enforces selection
+// before advancing.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const EMPTY_BASIC_DATA: BasicData = {
   toolName: "",
-  category: 0 as any,
+  autonomyTier: 0 as any,
+  agentic: undefined as any,
   users: [],
   deviceClass: 0 as any,
   determinism: 0 as any,
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const EMPTY_C_SCORES = Object.fromEntries(
   complexityDimensions.map((d) => [d.id, null]),
@@ -226,7 +229,8 @@ export default function SelectionTool() {
 
   // ── Derived: scoring floors ──
   const floors =
-    basicData.category > 0 &&
+    basicData.autonomyTier > 0 &&
+    basicData.agentic !== undefined &&
     basicData.deviceClass > 0 &&
     basicData.determinism > 0
       ? computeFloors(basicData)
@@ -256,7 +260,7 @@ export default function SelectionTool() {
       ...rJustifications,
     };
 
-    return evaluateFlags(allScores, allTexts, basicData.category);
+    return evaluateFlags(allScores, allTexts, basicData.autonomyTier);
   }, [cScores, rScores, cJustifications, rJustifications, basicData]);
 
   const flagsByDimension = useMemo(() => {

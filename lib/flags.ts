@@ -317,14 +317,14 @@ export interface FiredFlag {
 /**
  * Evaluate all flags given the current state.
  *
- * @param scores      Current dimension scores (e.g. { C1: 2, R3: 1, ... })
- * @param texts       Free-text content keyed by field: { toolPurpose: "...", C1: "...", R3: "..." }
- * @param category    Current tool category (Q4) for cross-field flags
+ * @param scores       Current dimension scores (e.g. { C1: 2, R3: 1, ... })
+ * @param texts        Free-text content keyed by field: { toolPurpose: "...", C1: "...", R3: "..." }
+ * @param autonomyTier Current autonomy tier (Q4, 1-5) for cross-field flags
  */
 export function evaluateFlags(
   scores: Record<string, number>,
   texts: Record<string, string>,
-  category: number,
+  autonomyTier: number,
 ): FiredFlag[] {
   const fired: FiredFlag[] = [];
 
@@ -348,7 +348,7 @@ export function evaluateFlags(
     // Determine the score to check against
     let scoreToCheck: number;
     if (flag.targetDimension === "CATEGORY") {
-      scoreToCheck = category;
+      scoreToCheck = autonomyTier;
     } else {
       scoreToCheck = scores[flag.targetDimension] ?? 0;
     }

@@ -6,16 +6,16 @@
 // (This file is a lightweight test runner — no test framework needed.)
 // ---------------------------------------------------------------------------
 
-import type { Score, BasicData, SubTriggerAnswers } from "./types";
-import { computeFloors, applyFloor } from "./floors";
-import { checkHardGates, getSubTriggerVisibility } from "./hardgates";
+import type { Score, BasicData, SubTriggerAnswers } from "../lib/types";
+import { computeFloors, applyFloor } from "../lib/floors";
+import { checkHardGates, getSubTriggerVisibility } from "../lib/hardgates";
 import {
   calculateGaps,
   classify,
   calculateAvgComplexity,
   prioritiseGaps,
   runAssessment,
-} from "./classify";
+} from "../lib/classify";
 
 let passed = 0;
 let failed = 0;
@@ -38,7 +38,8 @@ console.log("\n=== Scoring Floors ===");
 // Deterministic, non-autonomous, no device class → no floors
 const basicDeterministic: BasicData = {
   toolName: "Test",
-  category: 2,
+  autonomyTier: 2,
+  agentic: false,
   users: [],
   deviceClass: 1,
   determinism: 1,
@@ -51,7 +52,8 @@ assert(floors1["C11"] === 0, "Deterministic tool: C11 floor = 0");
 // Stochastic tool → C4 ≥ 2, C5 ≥ 2, C11 ≥ 2
 const basicStochastic: BasicData = {
   toolName: "Test",
-  category: 2,
+  autonomyTier: 2,
+  agentic: false,
   users: [],
   deviceClass: 1,
   determinism: 2,
@@ -62,10 +64,11 @@ assert(floors2["C5"] === 2, "Stochastic tool: C5 floor = 2");
 assert(floors2["C11"] === 2, "Stochastic tool: C11 floor = 2");
 assert(floors2["C9"] === 0, "Stochastic tool: C9 floor unchanged");
 
-// Autonomous → C4 ≥ 2, C9 ≥ 2
+// Autonomous (bounded, non-agentic) → C4 ≥ 2, C9 ≥ 2
 const basicAutonomous: BasicData = {
   toolName: "Test",
-  category: 4,
+  autonomyTier: 4,
+  agentic: false,
   users: [],
   deviceClass: 1,
   determinism: 1,
@@ -73,11 +76,44 @@ const basicAutonomous: BasicData = {
 const floors3 = computeFloors(basicAutonomous);
 assert(floors3["C4"] === 2, "Autonomous tool: C4 floor = 2");
 assert(floors3["C9"] === 2, "Autonomous tool: C9 floor = 2");
+assert(floors3["C5"] === 0, "Autonomous (non-agentic): C5 floor unchanged");
+assert(floors3["C11"] === 0, "Autonomous (non-agentic): C11 floor unchanged");
+
+// Agentic alone (decision-support, non-autonomous) → inherits stochastic floors
+const basicAgentic: BasicData = {
+  toolName: "Test",
+  autonomyTier: 3,
+  agentic: true,
+  users: [],
+  deviceClass: 1,
+  determinism: 1,
+};
+const floorsAgentic = computeFloors(basicAgentic);
+assert(floorsAgentic["C4"] === 2, "Agentic alone: C4 floor = 2");
+assert(floorsAgentic["C5"] === 2, "Agentic alone: C5 floor = 2");
+assert(floorsAgentic["C11"] === 2, "Agentic alone: C11 floor = 2");
+assert(floorsAgentic["C9"] === 0, "Agentic alone: C9 floor unchanged");
+
+// Agentic AND autonomous → hard-3 on C4, C5, C9, C11
+const basicAgenticAutonomous: BasicData = {
+  toolName: "Test",
+  autonomyTier: 5,
+  agentic: true,
+  users: [],
+  deviceClass: 1,
+  determinism: 1,
+};
+const floorsAA = computeFloors(basicAgenticAutonomous);
+assert(floorsAA["C4"] === 3, "Agentic+autonomous: C4 floor = 3");
+assert(floorsAA["C5"] === 3, "Agentic+autonomous: C5 floor = 3");
+assert(floorsAA["C9"] === 3, "Agentic+autonomous: C9 floor = 3");
+assert(floorsAA["C11"] === 3, "Agentic+autonomous: C11 floor = 3");
 
 // Class III → C9 = 3 (overrides Class IIb's C9 ≥ 2)
 const basicClassIII: BasicData = {
   toolName: "Test",
-  category: 2,
+  autonomyTier: 2,
+  agentic: false,
   users: [],
   deviceClass: 5,
   determinism: 1,
@@ -88,7 +124,8 @@ assert(floors4["C9"] === 3, "Class III device: C9 floor = 3");
 // Cumulative: stochastic + autonomous + Class III
 const basicCumulative: BasicData = {
   toolName: "Test",
-  category: 4,
+  autonomyTier: 4,
+  agentic: false,
   users: [],
   deviceClass: 5,
   determinism: 2,

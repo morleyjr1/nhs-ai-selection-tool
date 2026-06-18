@@ -6,7 +6,8 @@ import type { BasicData } from "../lib/types";
 import type { LookupResults } from "../lib/lookup";
 import ToolIntelligence from "./ToolIntelligence";
 import {
-  TOOL_CATEGORIES,
+  AUTONOMY_TIERS,
+  AGENTIC_OPTIONS,
   DEVICE_CLASSES,
   USER_GROUPS,
   DEPLOYMENT_SCOPES,
@@ -42,7 +43,8 @@ export default function BasicDataStep({
   const deviceClassBlocked = data.deviceClass === 6;
   const canProceed =
     data.toolName.trim() !== "" &&
-    data.category > 0 &&
+    data.autonomyTier > 0 &&
+    data.agentic !== undefined &&
     data.deviceClass > 0 &&
     !deviceClassBlocked &&
     data.determinism > 0 &&
@@ -223,27 +225,85 @@ export default function BasicDataStep({
           />
         </div>
 
-        {/* Q4: Tool category * */}
+        {/* Q4: Autonomy tier * */}
         <fieldset>
           <legend
             className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
-            Q4. Tool category *
+            Q4. Autonomy tier *
           </legend>
-          <div className="space-y-2">
-            {TOOL_CATEGORIES.map((opt) => (
-              <label key={opt.value} className="flex items-center gap-2 text-sm">
+          <div className="space-y-3">
+            {AUTONOMY_TIERS.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-start gap-2 text-sm cursor-pointer"
+              >
                 <input
                   type="radio"
-                  name="category"
-                  checked={data.category === opt.value}
+                  name="autonomyTier"
+                  className="mt-1 shrink-0"
+                  checked={data.autonomyTier === opt.value}
                   onChange={() =>
-                    update("category", opt.value as BasicData["category"])
+                    update(
+                      "autonomyTier",
+                      opt.value as BasicData["autonomyTier"],
+                    )
                   }
                 />
-                <span style={{ color: NHS_COLOURS.darkText }}>
-                  {opt.value}. {opt.label}
+                <span>
+                  <span
+                    className="font-medium"
+                    style={{ color: NHS_COLOURS.darkText }}
+                  >
+                    {opt.value}. {opt.label}
+                  </span>
+                  <span
+                    className="block text-xs mt-0.5 leading-snug"
+                    style={{ color: NHS_COLOURS.secondaryText }}
+                  >
+                    {opt.examples}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Q4b: Agentic * */}
+        <fieldset>
+          <legend
+            className="block text-sm font-medium mb-2"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            Q4b. Is the tool agentic? *
+          </legend>
+          <div className="space-y-3">
+            {AGENTIC_OPTIONS.map((opt) => (
+              <label
+                key={String(opt.value)}
+                className="flex items-start gap-2 text-sm cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="agentic"
+                  className="mt-1 shrink-0"
+                  checked={data.agentic === opt.value}
+                  onChange={() => update("agentic", opt.value)}
+                />
+                <span>
+                  <span
+                    className="font-medium"
+                    style={{ color: NHS_COLOURS.darkText }}
+                  >
+                    {opt.label}
+                  </span>
+                  <span
+                    className="block text-xs mt-0.5 leading-snug"
+                    style={{ color: NHS_COLOURS.secondaryText }}
+                  >
+                    {opt.description}
+                  </span>
                 </span>
               </label>
             ))}

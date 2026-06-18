@@ -14,6 +14,7 @@ import type { LookupResults } from "./lookup";
 import type { FiredFlag } from "./flags";
 import { complexityDimensions, readinessDimensions } from "./dimensions";
 import { generateRecommendation } from "./recommendation";
+import { AUTONOMY_TIERS } from "./constants";
 
 // NHS colour palette (RGB)
 const NHS_BLUE: [number, number, number] = [0, 94, 184];
@@ -211,7 +212,12 @@ export function generatePDFReport(data: ReportData): void {
     ["Organisation", basicData.orgName ?? "—"],
     ["Purpose", basicData.toolPurpose ?? "—"],
     ["Problem addressed", basicData.toolProblem ?? "—"],
-    ["Category", `${basicData.category}`],
+    [
+      "Autonomy tier",
+      AUTONOMY_TIERS.find((t) => t.value === basicData.autonomyTier)?.label ??
+        `${basicData.autonomyTier}`,
+    ],
+    ["Agentic", basicData.agentic ? "Yes" : "No"],
     ["Device classification", `${basicData.deviceClass}`],
     ["Determinism", `${basicData.determinism}`],
     ["Deployment scope", basicData.scope ?? "—"],

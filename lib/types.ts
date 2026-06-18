@@ -14,11 +14,16 @@ export type Classification =
 
 // ---- Basic Data Entry (Step 1 of the wizard) ----
 
-export type ToolCategory = 1 | 2 | 3 | 4;
-// 1: Purely administrative
+export type AutonomyTier = 1 | 2 | 3 | 4 | 5;
+// 1: Administrative
 // 2: Administrative in clinical setting
 // 3: Clinical decision support
-// 4: Autonomous clinical function
+// 4: Bounded autonomous clinical function (narrow, single-decision, fixed protocol)
+// 5: Fully autonomous clinical function (open-ended / multi-step, no clinician gate)
+//
+// "Agency" (whether the tool plans and executes multi-step action sequences) is an
+// orthogonal property captured by BasicData.agentic — NOT a higher tier here.
+// See docs/decisions/0001-autonomy-tier-and-agentic-flag.md.
 
 export type DeviceClass = 1 | 2 | 3 | 4 | 5 | 6;
 // 1: Not a medical device / no classification required
@@ -40,7 +45,9 @@ export interface BasicData {
   toolPurpose?: string;
   toolProblem?: string;
   orgName?: string;
-  category: ToolCategory;
+  autonomyTier: AutonomyTier;
+  /** Does the tool plan and execute multi-step action sequences? Orthogonal to autonomyTier. */
+  agentic: boolean;
   users: string[];
   scope?: string;
   adoptionStage?: string;
