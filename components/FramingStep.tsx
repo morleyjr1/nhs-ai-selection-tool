@@ -68,6 +68,16 @@ export default function FramingStep({ onNext }: FramingStepProps) {
             style={{ color: NHS_COLOURS.blue }}
           >
             NHS England DTAC assessment form
+          </a>{" "}
+          and Standard 10 of the{" "}
+          <a
+            href="https://www.nice.org.uk/corporate/ecd7"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            NICE Evidence Standards Framework for digital health technologies
           </a>
           .
         </p>
