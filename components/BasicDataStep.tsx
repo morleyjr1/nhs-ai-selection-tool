@@ -415,6 +415,21 @@ export default function BasicDataStep({
             ))}
           </div>
 
+          {/* Helper: MHRA medical device software/apps guidance */}
+          <p className="text-xs mt-2" style={{ color: NHS_COLOURS.secondaryText }}>
+            Unsure how this tool is classified? See the MHRA guidance on{" "}
+            <a
+              href="https://www.gov.uk/government/publications/medical-devices-software-applications-apps"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: NHS_COLOURS.blue }}
+            >
+              medical devices: software applications (apps)
+            </a>
+            .
+          </p>
+
           {/* Unknown device class warning */}
           {deviceClassBlocked && (
             <div
