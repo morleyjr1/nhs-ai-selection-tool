@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getWhoToAsk } from "../lib/dimensions";
+import { getReadinessResources } from "../lib/readiness-resources";
 import type { Dimension } from "../lib/dimensions";
 import type { Score, BasicData } from "../lib/types";
 import {
@@ -56,7 +57,10 @@ export default function DimensionCard({
 }: DimensionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showWhoToAsk, setShowWhoToAsk] = useState(false);
+  const [showResources, setShowResources] = useState(false);
   const whoToAsk = getWhoToAsk(dimension.id);
+  const resources =
+    side === "readiness" ? getReadinessResources(dimension.id) : [];
   const scores: Score[] = [1, 2, 3];
   const colourMap =
     side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
@@ -407,6 +411,45 @@ export default function DimensionCard({
               No
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Tools to help build this readiness (readiness dimensions only) */}
+      {resources.length > 0 && (
+        <div
+          className="mt-3 pt-3 border-t"
+          style={{ borderColor: NHS_COLOURS.lightGrey }}
+        >
+          <button
+            onClick={() => setShowResources((v) => !v)}
+            className="text-xs underline font-medium"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            {showResources
+              ? "Hide tools"
+              : `Tools to help build this readiness (${resources.length})`}
+          </button>
+          {showResources && (
+            <ul className="mt-2 space-y-2">
+              {resources.map((r) => (
+                <li key={r.id}>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium underline"
+                    style={{ color: NHS_COLOURS.blue }}
+                  >
+                    {r.title}
+                  </a>
+                  <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+                    {r.publisher} · {r.type}
+                    {r.note ? ` — ${r.note}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

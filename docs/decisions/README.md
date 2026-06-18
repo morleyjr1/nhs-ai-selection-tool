@@ -22,3 +22,4 @@ from the code. The aim is that the *reasoning* survives, not just the diff.
 - [0002 — "Who to ask" role vocabulary and per-dimension mapping](./0002-who-to-ask-role-vocabulary.md) — *Accepted*
 - [0003 — Feedback form (store-in-database)](./0003-feedback-form.md) — *Accepted*
 - [0004 — FDA full list + security/data-protection/standards checks](./0004-assurance-checks.md) — *Accepted*
+- [0005 — Readiness-building resource catalogue + surfacing](./0005-readiness-resources.md) — *Accepted*

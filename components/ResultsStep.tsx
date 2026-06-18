@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { AssessmentResult } from "../lib/classify";
 import type { BasicData } from "../lib/types";
 import type { LookupResults } from "../lib/lookup";
@@ -8,6 +8,8 @@ import type { FiredFlag } from "../lib/flags";
 import { NHS_COLOURS, CLASSIFICATION_COLOURS } from "../lib/constants";
 import { generatePDFReport } from "../lib/pdf-report";
 import { generateRecommendation } from "../lib/recommendation";
+import { getDimension } from "../lib/dimensions";
+import { getReadinessResources } from "../lib/readiness-resources";
 import GapMap from "./GapMap";
 
 interface ResultsStepProps {
@@ -271,38 +273,20 @@ export default function ResultsStep({
           >
             Prioritised Gaps
           </h3>
+          {assessment.classification === "Build readiness first" && (
+            <p
+              className="text-sm mb-3 leading-relaxed"
+              style={{ color: NHS_COLOURS.secondaryText }}
+            >
+              This tool is workable, but readiness needs building first. Each gap
+              below links to external tools and frameworks that can help close
+              it — open <strong>Tools</strong> on a gap to see resources specific
+              to that readiness dimension.
+            </p>
+          )}
           <div className="space-y-2">
             {assessment.prioritisedGaps.map((gap, i) => (
-              <div
-                key={gap.dimensionIndex}
-                className="flex items-center gap-3 rounded px-4 py-3"
-                style={{ backgroundColor: NHS_COLOURS.lightGrey }}
-              >
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{
-                    backgroundColor:
-                      gap.gap === 2 ? NHS_COLOURS.red : NHS_COLOURS.amber,
-                  }}
-                >
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: NHS_COLOURS.darkText }}
-                  >
-                    Dimension {gap.dimensionIndex}
-                  </span>
-                  <span
-                    className="text-sm ml-2"
-                    style={{ color: NHS_COLOURS.secondaryText }}
-                  >
-                    — {gap.gap === 2 ? "Major" : "Minor"} gap (C:
-                    {gap.complexityScore}, R:{gap.readinessScore})
-                  </span>
-                </div>
-              </div>
+              <GapRow key={gap.dimensionIndex} gap={gap} rank={i + 1} />
             ))}
           </div>
         </div>
@@ -370,6 +354,86 @@ export default function ResultsStep({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A prioritised-gap row with an expandable list of readiness-building tools
+ *  specific to that gap's dimension. */
+function GapRow({
+  gap,
+  rank,
+}: {
+  gap: AssessmentResult["prioritisedGaps"][number];
+  rank: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const dimId = `R${gap.dimensionIndex}`;
+  const dim = getDimension(dimId);
+  const resources = getReadinessResources(dimId);
+  const major = gap.gap === 2;
+
+  return (
+    <div
+      className="rounded px-4 py-3"
+      style={{ backgroundColor: NHS_COLOURS.lightGrey }}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+          style={{
+            backgroundColor: major ? NHS_COLOURS.red : NHS_COLOURS.amber,
+          }}
+        >
+          {rank}
+        </span>
+        <div className="flex-1">
+          <span
+            className="text-sm font-medium"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            {dimId}
+            {dim ? ` — ${dim.shortLabel}` : ""}
+          </span>
+          <span
+            className="text-sm ml-2"
+            style={{ color: NHS_COLOURS.secondaryText }}
+          >
+            — {major ? "Major" : "Minor"} gap (C:
+            {gap.complexityScore}, R:{gap.readinessScore})
+          </span>
+        </div>
+        {resources.length > 0 && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="text-xs underline shrink-0"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            {open ? "Hide tools" : `Tools (${resources.length})`}
+          </button>
+        )}
+      </div>
+      {open && resources.length > 0 && (
+        <ul className="mt-2 ml-9 space-y-2">
+          {resources.map((r) => (
+            <li key={r.id}>
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium underline"
+                style={{ color: NHS_COLOURS.blue }}
+              >
+                {r.title}
+              </a>
+              <p className="text-xs" style={{ color: NHS_COLOURS.grey }}>
+                {r.publisher} · {r.type}
+                {r.note ? ` — ${r.note}` : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
