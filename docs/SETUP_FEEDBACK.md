@@ -23,6 +23,19 @@ feedback, a free tier, and a UK/EU region for data residency.
      page        text,
      user_agent  text
    );
+
+   -- Review queue for NHS-staff suggestions of readiness-building tools.
+   -- Suggestions are NOT auto-published; curate approved ones into
+   -- lib/readiness-resources.ts.
+   create table if not exists resource_submissions (
+     id          bigint generated always as identity primary key,
+     created_at  timestamptz not null default now(),
+     title       text not null,
+     url         text not null,
+     dimensions  text,            -- comma-separated readiness dimensions, e.g. "R3,R9"
+     description text,
+     submitter   text
+   );
    ```
 
 3. Get the connection string: click the green **Connect** button at the top of

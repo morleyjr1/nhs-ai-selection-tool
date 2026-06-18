@@ -1,7 +1,7 @@
 # 0005 — Readiness-building resource catalogue + surfacing
 
-- **Status:** Accepted (catalogue + surfacing); best-practice exemplars and the
-  submission form are related follow-ups (see "Remaining").
+- **Status:** Accepted. Catalogue, surfacing, best-practice exemplars, and the
+  submission form are all implemented.
 - **Date:** 2026-06-18
 - **Affects:** `lib/readiness-resources.ts`, `components/DimensionCard.tsx`,
   `components/ResultsStep.tsx`
@@ -38,13 +38,22 @@ The catalogue is the single source of truth; edit it to change what's surfaced.
 - **"Build readiness first" result:** a note above the prioritised gaps directs
   the user to the per-gap tools.
 
-## Remaining (related sub-tasks)
+### Best-practice exemplars (A)
 
-- **A — Best-practice exemplars:** a concrete "what strong readiness looks like"
-  per dimension, to share the same card toggle. To be drafted for review.
-- **D — Submission form:** an NHS-staff form to submit a best-practice tool,
-  stored in a new Supabase `resource_submissions` table as a review queue
-  (curated before being added to the catalogue here).
+A concrete "what strong readiness looks like" per readiness dimension
+(`bestPracticeByDimension` in `lib/dimensions.ts`, with `getBestPractice(id)`),
+grounded in real artefacts (DCB0160, DPIA/DSPT, NICE ESF, QSIR, STANDING
+Together, the Buyer's Guide, etc.). Shown in the readiness card toggle ("What
+good looks like, and tools to help") and at the top of each results gap.
+
+### Submission form (D)
+
+An NHS-staff form (`components/ResourceSubmitWidget.tsx`, surfaced in the results
+near the prioritised gaps) posts to `/api/resource-submissions`, storing
+suggestions in a Supabase `resource_submissions` review queue (honeypot +
+validation; reuses the feedback DB connection). Submissions are **not**
+auto-published — the team curates approved ones into `lib/readiness-resources.ts`.
+Table SQL is in `docs/SETUP_FEEDBACK.md`.
 
 ## Notes
 

@@ -8,9 +8,10 @@ import type { FiredFlag } from "../lib/flags";
 import { NHS_COLOURS, CLASSIFICATION_COLOURS } from "../lib/constants";
 import { generatePDFReport } from "../lib/pdf-report";
 import { generateRecommendation } from "../lib/recommendation";
-import { getDimension } from "../lib/dimensions";
+import { getDimension, getBestPractice } from "../lib/dimensions";
 import { getReadinessResources } from "../lib/readiness-resources";
 import GapMap from "./GapMap";
+import ResourceSubmitWidget from "./ResourceSubmitWidget";
 
 interface ResultsStepProps {
   assessment: AssessmentResult;
@@ -289,6 +290,9 @@ export default function ResultsStep({
               <GapRow key={gap.dimensionIndex} gap={gap} rank={i + 1} />
             ))}
           </div>
+          <div className="mt-3">
+            <ResourceSubmitWidget />
+          </div>
         </div>
       )}
 
@@ -371,6 +375,7 @@ function GapRow({
   const dimId = `R${gap.dimensionIndex}`;
   const dim = getDimension(dimId);
   const resources = getReadinessResources(dimId);
+  const bestPractice = getBestPractice(dimId);
   const major = gap.gap === 2;
 
   return (
@@ -413,8 +418,18 @@ function GapRow({
           </button>
         )}
       </div>
-      {open && resources.length > 0 && (
-        <ul className="mt-2 ml-9 space-y-2">
+      {open && (bestPractice || resources.length > 0) && (
+        <div className="mt-2 ml-9 space-y-2">
+          {bestPractice && (
+            <p className="text-xs leading-relaxed" style={{ color: NHS_COLOURS.secondaryText }}>
+              <span className="font-semibold" style={{ color: NHS_COLOURS.darkText }}>
+                What good looks like:{" "}
+              </span>
+              {bestPractice}
+            </p>
+          )}
+          {resources.length > 0 && (
+          <ul className="space-y-2">
           {resources.map((r) => (
             <li key={r.id}>
               <a
@@ -432,7 +447,9 @@ function GapRow({
               </p>
             </li>
           ))}
-        </ul>
+          </ul>
+          )}
+        </div>
       )}
     </div>
   );
