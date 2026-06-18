@@ -57,6 +57,20 @@ export default function FramingStep({ onNext }: FramingStepProps) {
           better use of existing data, improved clinical pathways, or simpler
           digital tools — with comparable effectiveness and lower risk?
         </p>
+        <p className="text-sm mb-4" style={{ color: NHS_COLOURS.secondaryText }}>
+          For structured guiding questions to help you judge this, see Part B of
+          the{" "}
+          <a
+            href="https://digital.nhs.uk/services/digital-technology-assessment-criteria-dtac/how-dtac-works#using-the-nhs-england-dtac-form"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            NHS England DTAC assessment form
+          </a>
+          .
+        </p>
         <div className="flex gap-3">
           <button
             onClick={() => handleAnswer("proportionality", true)}
