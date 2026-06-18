@@ -468,6 +468,22 @@ export default function BasicDataStep({
             ))}
           </div>
 
+          {/* Helper: AI and Digital Regulations Service */}
+          <p className="text-xs mt-2" style={{ color: NHS_COLOURS.secondaryText }}>
+            Not sure what applies? The{" "}
+            <a
+              href="https://www.digitalregulations.innovation.nhs.uk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: NHS_COLOURS.blue }}
+            >
+              AI and Digital Regulations Service
+            </a>{" "}
+            sets out which regulations, approvals, and governance steps apply
+            before an AI tool is deployed in the NHS.
+          </p>
+
           {/* Regulatory "No" warning */}
           {regulatoryBlocked && (
             <div
