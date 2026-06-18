@@ -583,3 +583,172 @@ export const readinessDimensions: Dimension[] = dimensions.filter(
 export function getDimension(id: string): Dimension | undefined {
   return dimensions.find((d) => d.id === id);
 }
+
+// ---------------------------------------------------------------------------
+// "Who can help answer this?" — suggested roles/sources per dimension.
+//
+// A controlled vocabulary (so the same role names are reused consistently) and
+// a per-dimension mapping. Surfaced via the ℹ️ tooltip on each dimension card.
+// First role listed is the primary source. Seeded from the [Ask vendor] /
+// [Assess internally] tags in the guiding questions.
+// See docs/decisions/0002-who-to-ask-role-vocabulary.md.
+// ---------------------------------------------------------------------------
+
+export const WHO_TO_ASK_ROLES = [
+  "The vendor / supplier",
+  "Chief Clinical Information Officer (CCIO)",
+  "Relevant clinical or specialty lead",
+  "Clinical Safety Officer",
+  "Information Governance lead / DPO",
+  "Caldicott Guardian",
+  "Senior Information Risk Owner (SIRO)",
+  "Cyber / information security lead",
+  "Medical device regulatory lead",
+  "Chief Information Officer / IT & infrastructure lead",
+  "Data / informatics / analytics team",
+  "Procurement / commercial / contracts lead",
+  "Operational / service manager / change lead",
+  "Workforce, training & education lead",
+  "HR / people team",
+  "Staff representatives (union / Staff Side)",
+  "Finance lead",
+  "AI governance group / SRO",
+  "Patient & public involvement lead / patient representatives",
+  "Equality & health inequalities (EDI) lead",
+  "Evaluation / health services research partner",
+] as const;
+
+export type WhoToAskRole = (typeof WHO_TO_ASK_ROLES)[number];
+
+/** Per-dimension suggested roles. Typed so any role typo fails the build. */
+export const whoToAskByDimension: Record<string, WhoToAskRole[]> = {
+  C1: [
+    "Relevant clinical or specialty lead",
+    "Chief Clinical Information Officer (CCIO)",
+  ],
+  C2: [
+    "The vendor / supplier",
+    "Data / informatics / analytics team",
+    "Chief Information Officer / IT & infrastructure lead",
+  ],
+  C3: [
+    "Information Governance lead / DPO",
+    "Caldicott Guardian",
+    "The vendor / supplier",
+  ],
+  C4: [
+    "The vendor / supplier",
+    "Chief Clinical Information Officer (CCIO)",
+    "Relevant clinical or specialty lead",
+    "Clinical Safety Officer",
+  ],
+  C5: [
+    "The vendor / supplier",
+    "Data / informatics / analytics team",
+    "Relevant clinical or specialty lead",
+    "Medical device regulatory lead",
+  ],
+  C6: [
+    "The vendor / supplier",
+    "Chief Information Officer / IT & infrastructure lead",
+  ],
+  C7: [
+    "Operational / service manager / change lead",
+    "Relevant clinical or specialty lead",
+    "Workforce, training & education lead",
+    "HR / people team",
+    "Staff representatives (union / Staff Side)",
+  ],
+  C8: [
+    "The vendor / supplier",
+    "Evaluation / health services research partner",
+    "Data / informatics / analytics team",
+    "Medical device regulatory lead",
+  ],
+  C9: [
+    "Clinical Safety Officer",
+    "Relevant clinical or specialty lead",
+    "Medical device regulatory lead",
+  ],
+  C10: [
+    "Patient & public involvement lead / patient representatives",
+    "Equality & health inequalities (EDI) lead",
+    "Chief Clinical Information Officer (CCIO)",
+    "The vendor / supplier",
+  ],
+  C11: [
+    "The vendor / supplier",
+    "Data / informatics / analytics team",
+    "Clinical Safety Officer",
+    "Medical device regulatory lead",
+  ],
+  C12: [
+    "Procurement / commercial / contracts lead",
+    "Chief Information Officer / IT & infrastructure lead",
+    "The vendor / supplier",
+  ],
+  R1: [
+    "AI governance group / SRO",
+    "Chief Clinical Information Officer (CCIO)",
+    "Clinical Safety Officer",
+  ],
+  R2: [
+    "Chief Information Officer / IT & infrastructure lead",
+    "Data / informatics / analytics team",
+  ],
+  R3: [
+    "Information Governance lead / DPO",
+    "Senior Information Risk Owner (SIRO)",
+    "Cyber / information security lead",
+  ],
+  R4: [
+    "Chief Clinical Information Officer (CCIO)",
+    "Relevant clinical or specialty lead",
+    "Workforce, training & education lead",
+  ],
+  R5: [
+    "Data / informatics / analytics team",
+    "Relevant clinical or specialty lead",
+    "Evaluation / health services research partner",
+  ],
+  R6: [
+    "Chief Information Officer / IT & infrastructure lead",
+    "Finance lead",
+  ],
+  R7: [
+    "Operational / service manager / change lead",
+    "AI governance group / SRO",
+    "Workforce, training & education lead",
+    "HR / people team",
+    "Staff representatives (union / Staff Side)",
+  ],
+  R8: [
+    "Evaluation / health services research partner",
+    "Data / informatics / analytics team",
+  ],
+  R9: [
+    "Clinical Safety Officer",
+    "Medical device regulatory lead",
+    "Relevant clinical or specialty lead",
+  ],
+  R10: [
+    "Patient & public involvement lead / patient representatives",
+    "Equality & health inequalities (EDI) lead",
+    "AI governance group / SRO",
+  ],
+  R11: [
+    "Chief Information Officer / IT & infrastructure lead",
+    "Data / informatics / analytics team",
+    "Clinical Safety Officer",
+    "Procurement / commercial / contracts lead",
+  ],
+  R12: [
+    "Procurement / commercial / contracts lead",
+    "Chief Information Officer / IT & infrastructure lead",
+    "Finance lead",
+  ],
+};
+
+export function getWhoToAsk(id: string): WhoToAskRole[] {
+  return whoToAskByDimension[id] ?? [];
+}
