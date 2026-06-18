@@ -134,11 +134,59 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
             >
-              This tool helps NHS organisations assess whether a specific AI tool
-              is appropriate for their specific context. It pairs 12 complexity
-              dimensions (properties of the tool) with 12 readiness dimensions
-              (capabilities of the deploying organisation) to produce a
-              context-sensitive deployment recommendation.
+              Adopting an AI tool is rarely a simple yes or no. The same tool can
+              be a sensible choice for one organisation and a serious risk for
+              another, because what matters is the fit between the demands a tool
+              places on its environment and the capabilities of the organisation
+              deploying it. This tool makes that fit explicit. It pairs twelve{" "}
+              <em>complexity</em> dimensions (properties of the tool, such as how
+              hard its task is, how its data behaves, and how much it must
+              integrate with existing systems) with twelve <em>readiness</em>{" "}
+              dimensions (capabilities of your organisation, such as its
+              governance, data infrastructure, and capacity for clinical
+              oversight). Where a tool&apos;s complexity outruns your readiness,
+              you have a gap. The tool identifies those gaps, prioritises them,
+              and returns one of four recommendations: quick win, deploy and
+              monitor, build readiness first, or avoid.
+            </p>
+            <p
+              className="text-sm mb-4"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              It is a diagnostic instrument, not a prescriptive one. It tells you{" "}
+              <em>where</em> to focus; it does not tell you exactly <em>what</em>{" "}
+              to do, because that depends on knowledge of your organisation that
+              no standardised tool can hold.
+            </p>
+
+            <h2
+              className="text-base font-semibold mb-3"
+              style={{ color: NHS_COLOURS.darkBlue }}
+            >
+              Where it fits in your adoption process
+            </h2>
+            <p
+              className="text-sm mb-4"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              Use this assessment early — while horizon scanning, building a
+              business case, preparing for procurement, or planning a pilot. It
+              is most useful before you have committed, when its findings can
+              still shape the decision rather than justify one already made.
+            </p>
+            <p
+              className="text-sm mb-4"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              It complements, and does not replace, the formal processes that
+              govern AI in the NHS. It is not a substitute for the clinical
+              safety work required under DCB0129 and DCB0160, a Data Protection
+              Impact Assessment, the Digital Technology Assessment Criteria
+              (DTAC), or regulatory approval of the tool as a medical device.
+              Think of it as the structured conversation to have{" "}
+              <em>before and alongside</em> those processes: a single place to
+              surface whether a tool is the right fit for your organisation, and
+              where your effort should go if you decide to proceed.
             </p>
 
             <h2
@@ -151,32 +199,17 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
             >
-              Clinical safety officers, digital transformation leads, AI
-              programme managers, procurement teams, and anyone involved in
-              decisions about adopting AI tools in NHS settings. The assessment
-              is designed to be completed collaboratively — it works best when
-              clinical, technical, and operational perspectives are all
-              represented.
-            </p>
-
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
-            >
-              How it works
-            </h2>
-            <p
-              className="text-sm mb-4"
-              style={{ color: NHS_COLOURS.darkText }}
-            >
-              The tool guides you through five steps: (1) a framing check to
-              confirm the assessment is proportionate and needs-led, (2) basic
-              data about the tool and your organisation, (3) complexity scoring
-              across 12 dimensions, (4) readiness scoring across 12 paired
-              dimensions, and (5) a classification result with prioritised
-              actions. Hard gates enforce non-negotiable safety requirements, and
-              scoring floors ensure minimum complexity thresholds are met for
-              higher-risk tools.
+              It is for anyone involved in deciding whether to adopt an AI tool
+              in an NHS setting: clinical safety officers, digital transformation
+              leads, AI programme managers, information governance teams, and
+              procurement. It is most usefully completed by a multidisciplinary
+              team rather than one person, because the questions span clinical,
+              technical, governance, and operational ground that no single role
+              sees in full. Where you do not know an answer, the tool signposts
+              who to speak to — your clinical safety officer, cybersecurity team,
+              information governance lead, or supplier — so that a gap in
+              knowledge becomes a prompt to consult the right person rather than
+              a guess.
             </p>
 
             <h2
@@ -189,18 +222,14 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
             >
-              This assessment is designed to evaluate one AI tool at a time.
-              Organisations considering the adoption of multiple AI tools
-              should be aware that readiness scores are not independent
-              across tools: the aggregate burden on governance capacity,
-              clinical workforce, IT infrastructure, and monitoring resources
-              should be assessed cumulatively. A trust that comfortably
-              meets the readiness threshold for a single tool may find that
-              deploying three or four simultaneously exceeds its capacity.
-              Where multiple tools are being considered, run a separate
-              assessment for each and then review the readiness scores
-              side by side, paying particular attention to dimensions where
-              cumulative demand is highest.
+              This assessment evaluates one tool at a time, but readiness is not
+              independent across tools. The burden on governance, clinical
+              workforce, IT infrastructure, and monitoring accumulates: an
+              organisation that comfortably meets the threshold for a single tool
+              may find that deploying three or four at once exceeds its capacity.
+              Where several tools are in view, run a separate assessment for each
+              and review the readiness scores side by side, paying particular
+              attention to the dimensions where cumulative demand is highest.
             </p>
 
             <h2
