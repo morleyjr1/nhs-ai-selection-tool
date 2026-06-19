@@ -126,7 +126,7 @@ export default function BasicDataStep({
             onChange={(e) => update("toolName", e.target.value)}
             className="w-full px-3 py-2 rounded border text-sm"
             style={{ borderColor: NHS_COLOURS.grey }}
-            placeholder="e.g. Dragon Copilot"
+            placeholder="e.g. the product name"
           />
         </div>
 
@@ -231,7 +231,7 @@ export default function BasicDataStep({
             className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
-            Q4. Autonomy tier *
+            Q4a. What function is the tool being used for? *
           </legend>
           <div className="space-y-3">
             {AUTONOMY_TIERS.map((opt) => (
@@ -278,6 +278,14 @@ export default function BasicDataStep({
           >
             Q4b. Is the tool agentic? *
           </legend>
+          <p
+            className="text-xs mb-2"
+            style={{ color: NHS_COLOURS.secondaryText }}
+          >
+            An agentic tool plans and carries out a multi-step sequence of
+            actions towards a goal — choosing what to do next and adapting as it
+            goes — rather than producing a single output.
+          </p>
           <div className="space-y-3">
             {AGENTIC_OPTIONS.map((opt) => (
               <label
@@ -308,6 +316,128 @@ export default function BasicDataStep({
               </label>
             ))}
           </div>
+        </fieldset>
+
+        {/* Q4c: Determinism (stochastic vs deterministic) * */}
+        <fieldset>
+          <legend
+            className="block text-sm font-medium mb-2"
+            style={{ color: NHS_COLOURS.darkText }}
+          >
+            Q4c. Is the tool stochastic or deterministic? *
+          </legend>
+          <div className="space-y-3">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="determinism"
+                className="mt-1"
+                checked={data.determinism === 1}
+                onChange={() =>
+                  update("determinism", 1 as BasicData["determinism"])
+                }
+              />
+              <div>
+                <span
+                  className="font-medium"
+                  style={{ color: NHS_COLOURS.darkText }}
+                >
+                  Deterministic
+                </span>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  Given the same input, the tool always produces the same output.
+                  Rule-based systems, simple calculators, and look-up tools are
+                  typically deterministic.
+                </p>
+              </div>
+            </label>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="determinism"
+                className="mt-1"
+                checked={data.determinism === 2}
+                onChange={() =>
+                  update("determinism", 2 as BasicData["determinism"])
+                }
+              />
+              <div>
+                <span
+                  className="font-medium"
+                  style={{ color: NHS_COLOURS.darkText }}
+                >
+                  Stochastic
+                </span>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  The tool may produce different outputs from the same input due
+                  to randomness in its model (e.g. large language models, neural
+                  networks with sampling). Stochastic tools raise minimum scoring
+                  floors on oversight, validation, and monitoring dimensions.
+                </p>
+              </div>
+            </label>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="determinism"
+                className="mt-1"
+                checked={data.determinism === 3}
+                onChange={() =>
+                  update("determinism", 3 as BasicData["determinism"])
+                }
+              />
+              <div>
+                <span
+                  className="font-medium"
+                  style={{ color: NHS_COLOURS.darkText }}
+                >
+                  Unknown
+                </span>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  You are not sure whether the tool is deterministic or
+                  stochastic.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Unknown determinism warning */}
+          {determinismBlocked && (
+            <div
+              className="rounded-lg p-4 mt-3 border-l-4"
+              style={{
+                backgroundColor: "#FEF3F2",
+                borderLeftColor: NHS_COLOURS.red,
+              }}
+            >
+              <p
+                className="font-semibold text-sm"
+                style={{ color: NHS_COLOURS.red }}
+              >
+                Assessment cannot proceed without this information
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: NHS_COLOURS.darkText }}
+              >
+                Whether a tool is deterministic or stochastic affects the minimum
+                complexity scores applied to several dimensions (human oversight,
+                validation, and monitoring). Without this information, the
+                framework cannot calculate accurate scoring floors and the
+                assessment would be unreliable. Please consult the tool&apos;s
+                technical documentation or development team before proceeding.
+              </p>
+            </div>
+          )}
         </fieldset>
 
         {/* Q5: Intended users */}
@@ -538,135 +668,13 @@ export default function BasicDataStep({
           )}
         </fieldset>
 
-        {/* Q10: Determinism * */}
+        {/* Q10: Developer type — radio buttons */}
         <fieldset>
           <legend
             className="block text-sm font-medium mb-2"
             style={{ color: NHS_COLOURS.darkText }}
           >
-            Q10. Determinism *
-          </legend>
-          <div className="space-y-3">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 1}
-                onChange={() =>
-                  update("determinism", 1 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Deterministic
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  Given the same input, the tool always produces the same output.
-                  Rule-based systems, simple calculators, and look-up tools are
-                  typically deterministic.
-                </p>
-              </div>
-            </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 2}
-                onChange={() =>
-                  update("determinism", 2 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Stochastic
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  The tool may produce different outputs from the same input due
-                  to randomness in its model (e.g. large language models, neural
-                  networks with sampling). Stochastic tools raise minimum scoring
-                  floors on oversight, validation, and monitoring dimensions.
-                </p>
-              </div>
-            </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 3}
-                onChange={() =>
-                  update("determinism", 3 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Unknown
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  You are not sure whether the tool is deterministic or
-                  stochastic.
-                </p>
-              </div>
-            </label>
-          </div>
-
-          {/* Unknown determinism warning */}
-          {determinismBlocked && (
-            <div
-              className="rounded-lg p-4 mt-3 border-l-4"
-              style={{
-                backgroundColor: "#FEF3F2",
-                borderLeftColor: NHS_COLOURS.red,
-              }}
-            >
-              <p
-                className="font-semibold text-sm"
-                style={{ color: NHS_COLOURS.red }}
-              >
-                Assessment cannot proceed without this information
-              </p>
-              <p
-                className="text-sm mt-1"
-                style={{ color: NHS_COLOURS.darkText }}
-              >
-                Whether a tool is deterministic or stochastic affects the minimum
-                complexity scores applied to several dimensions (human oversight,
-                validation, and monitoring). Without this information, the
-                framework cannot calculate accurate scoring floors and the
-                assessment would be unreliable. Please consult the tool&apos;s
-                technical documentation or development team before proceeding.
-              </p>
-            </div>
-          )}
-        </fieldset>
-
-        {/* Q11: Developer type — radio buttons */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
-            Q11. Developer type
+            Q10. Developer type
           </legend>
           <div className="space-y-2">
             {DEVELOPER_TYPES.map((dt) => (

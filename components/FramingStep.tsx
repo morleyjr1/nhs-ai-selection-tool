@@ -37,7 +37,38 @@ export default function FramingStep({ onNext }: FramingStepProps) {
       </h2>
       <p className="mb-8" style={{ color: NHS_COLOURS.secondaryText }}>
         Before assessing complexity and readiness, two threshold questions must
-        be satisfied. Both must be answered &ldquo;Yes&rdquo; to proceed.
+        be satisfied. Both must be answered &ldquo;Yes&rdquo; to proceed. For
+        structured guiding questions to help you judge these, see Part B of the{" "}
+        <a
+          href="https://digital.nhs.uk/services/digital-technology-assessment-criteria-dtac/how-dtac-works#using-the-nhs-england-dtac-form"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+          style={{ color: NHS_COLOURS.blue }}
+        >
+          NHS England DTAC assessment form
+        </a>
+        , Standard 10 of the{" "}
+        <a
+          href="https://www.nice.org.uk/corporate/ecd7"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+          style={{ color: NHS_COLOURS.blue }}
+        >
+          NICE Evidence Standards Framework for digital health technologies
+        </a>
+        , and Question 1 of the{" "}
+        <a
+          href="https://digital.nhs.uk/services/ai-knowledge-repository/develop-ai/a-buyers-guide-to-ai-in-health-and-care"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+          style={{ color: NHS_COLOURS.blue }}
+        >
+          NHS Buyer&apos;s Guide to AI in Health and Care
+        </a>
+        .
       </p>
 
       {/* FQ1 — Proportionality */}
@@ -56,40 +87,6 @@ export default function FramingStep({ onNext }: FramingStepProps) {
           addressed adequately through non-AI means — such as process redesign,
           better use of existing data, improved clinical pathways, or simpler
           digital tools — with comparable effectiveness and lower risk?
-        </p>
-        <p className="text-sm mb-4" style={{ color: NHS_COLOURS.secondaryText }}>
-          For structured guiding questions to help you judge this, see Part B of
-          the{" "}
-          <a
-            href="https://digital.nhs.uk/services/digital-technology-assessment-criteria-dtac/how-dtac-works#using-the-nhs-england-dtac-form"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-            style={{ color: NHS_COLOURS.blue }}
-          >
-            NHS England DTAC assessment form
-          </a>{" "}
-          and Standard 10 of the{" "}
-          <a
-            href="https://www.nice.org.uk/corporate/ecd7"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-            style={{ color: NHS_COLOURS.blue }}
-          >
-            NICE Evidence Standards Framework for digital health technologies
-          </a>
-          , and Question 1 of the{" "}
-          <a
-            href="https://digital.nhs.uk/services/ai-knowledge-repository/develop-ai/a-buyers-guide-to-ai-in-health-and-care"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-            style={{ color: NHS_COLOURS.blue }}
-          >
-            NHS Buyer&apos;s Guide to AI in Health and Care
-          </a>
-          .
         </p>
         <div className="flex gap-3">
           <button

@@ -5,6 +5,7 @@ import type { Score, BasicData } from "../lib/types";
 import { NHS_COLOURS } from "../lib/constants";
 import type { FiredFlag } from "../lib/flags";
 import DimensionCard from "./DimensionCard";
+import ResourceSubmitWidget from "./ResourceSubmitWidget";
 
 interface ScoringStepProps {
   title: string;
@@ -152,6 +153,13 @@ export default function ScoringStep({
             The assessment cannot be finalised until every dimension is scored.
             Go back to the unscored dimensions and gather the information needed.
           </p>
+        </div>
+      )}
+
+      {/* Suggest a readiness-building tool (readiness step only) */}
+      {side === "readiness" && (
+        <div className="mb-4">
+          <ResourceSubmitWidget />
         </div>
       )}
 

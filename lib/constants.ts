@@ -61,25 +61,25 @@ export const AUTONOMY_TIERS = [
     value: 2,
     label: "Administrative in a clinical setting",
     examples:
-      "Handles patient data or sits inside the clinical workflow, but documents rather than recommends — it does not influence the clinical decision itself. For example: ambient documentation tools that record and transcribe a consultation (such as Dragon Copilot), automated clinical coding, or summarising notes for the record.",
+      "Handles patient data or sits inside the clinical workflow, but documents rather than recommends — it does not influence the clinical decision itself. For example: ambient documentation tools that record and transcribe a consultation, automated clinical coding, or summarising notes for the record.",
   },
   {
     value: 3,
     label: "Clinical decision support",
     examples:
-      "Produces outputs that inform a clinician's decision, with a human making the final call. For example: risk prediction and early warning (Cera), imaging detection and interpretation (Mia, Annalise CXR, HeartFlow FFRCT), mental-health referral triage and patient-facing interaction (Limbic Access), early-warning and escalation scores (a digital NEWS2 calculator), and AI-drafted discharge summaries that a clinician reviews and signs off.",
+      "Produces outputs that inform a clinician's decision, with a human making the final call. For example: risk prediction and early warning, imaging detection and interpretation, mental-health referral triage and patient-facing interaction, early-warning and escalation scores (such as a digital NEWS2 calculator), and AI-drafted discharge summaries that a clinician reviews and signs off.",
   },
   {
     value: 4,
     label: "Bounded autonomous clinical function",
     examples:
-      "Acts on a clinical decision without a clinician reviewing that individual output, but only on a single, narrow, well-defined decision within a fixed protocol. For example: insulin-dose titration (d-Nav), autonomous diabetic-retinopathy grading that replaces a human grader (EyeArt), or autonomous discharge of clearly benign lesions from a pathway (Skin Analytics DERM).",
+      "Acts on a clinical decision without a clinician reviewing that individual output, but only on a single, narrow, well-defined decision within a fixed protocol. For example: autonomous insulin-dose titration, autonomous diabetic-retinopathy grading that replaces a human grader, or autonomous discharge of clearly benign lesions from a pathway.",
   },
   {
     value: 5,
     label: "Fully autonomous clinical function",
     examples:
-      "Acts without a clinician gate across an open-ended or multi-step scope, rather than on one narrow decision. The broadest, highest-scrutiny tier — especially when combined with agentic behaviour (e.g. an autonomous patient-facing care agent such as Hippocratic AI). Rare in the NHS.",
+      "Acts without a clinician gate across an open-ended or multi-step scope, rather than on one narrow decision. The broadest, highest-scrutiny tier — especially when combined with agentic behaviour (for example an autonomous patient-facing care agent that holds open-ended conversations). Rare in the NHS.",
   },
 ] as const;
 
@@ -92,7 +92,7 @@ export const AGENTIC_OPTIONS = [
     value: true,
     label: "Yes — agentic",
     description:
-      "The tool plans and carries out multi-step sequences of actions towards a goal — choosing what to do next, often using tools, and adapting as it goes. For example: a copilot that reads records, drafts a summary, and places orders (Tortus/OSLER), or an autonomous patient-facing care agent (Hippocratic AI).",
+      "The tool plans and carries out multi-step sequences of actions towards a goal — choosing what to do next, often using tools, and adapting as it goes. For example: a clinical copilot that reads records, drafts a summary, and places orders under clinician supervision, or an autonomous patient-facing care agent.",
   },
   {
     value: false,

@@ -290,11 +290,13 @@ export default function ResultsStep({
               <GapRow key={gap.dimensionIndex} gap={gap} rank={i + 1} />
             ))}
           </div>
-          <div className="mt-3">
-            <ResourceSubmitWidget />
-          </div>
         </div>
       )}
+
+      {/* Suggest a readiness-building tool */}
+      <div className="mb-8">
+        <ResourceSubmitWidget />
+      </div>
 
       {/* Scope and limitations */}
       <div
