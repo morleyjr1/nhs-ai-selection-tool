@@ -214,9 +214,14 @@ export default function BasicDataStep({
       {/* ── Section: Function and behaviour ── */}
       <Section title="Function and behaviour">
         <div>
-          <label className={labelClass} style={labelStyle}>
+          <FieldLabel
+            info={AUTONOMY_TIERS.map((t) => ({
+              label: `${t.value}. ${t.label}`,
+              description: t.examples,
+            }))}
+          >
             Q4a. What function is the tool being used for? *
-          </label>
+          </FieldLabel>
           <select
             value={data.autonomyTier || ""}
             onChange={(e) =>
@@ -241,9 +246,14 @@ export default function BasicDataStep({
         </div>
 
         <div>
-          <label className={labelClass} style={labelStyle}>
+          <FieldLabel
+            info={AGENTIC_OPTIONS.map((o) => ({
+              label: o.label,
+              description: o.description,
+            }))}
+          >
             Q4b. Is the tool agentic? *
-          </label>
+          </FieldLabel>
           <p className="text-xs mb-1.5" style={hintStyle}>
             An agentic tool plans and carries out a multi-step sequence of
             actions towards a goal — choosing what to do next and adapting as it
@@ -268,9 +278,14 @@ export default function BasicDataStep({
         </div>
 
         <div>
-          <label className={labelClass} style={labelStyle}>
+          <FieldLabel
+            info={DETERMINISM_OPTIONS.map((o) => ({
+              label: o.label,
+              description: DETERMINISM_INFO[o.value],
+            }))}
+          >
             Q4c. Is the tool stochastic or deterministic? *
-          </label>
+          </FieldLabel>
           <select
             value={data.determinism || ""}
             onChange={(e) =>
@@ -570,6 +585,80 @@ function Blurb({ children }: { children: React.ReactNode }) {
     >
       {children}
     </p>
+  );
+}
+
+/** An "i" button that reveals the full set of options and their descriptions. */
+function OptionsInfo({
+  items,
+}: {
+  items: ReadonlyArray<{ label: string; description: string }>;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block leading-none">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="What do these options mean?"
+        aria-expanded={open}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-semibold align-middle"
+        style={{
+          border: `1px solid ${NHS_COLOURS.blue}`,
+          color: NHS_COLOURS.blue,
+          backgroundColor: NHS_COLOURS.white,
+          cursor: "pointer",
+        }}
+      >
+        i
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 mt-1 z-20 w-72 rounded-lg p-3 shadow-lg text-left"
+          style={{
+            backgroundColor: NHS_COLOURS.white,
+            border: `1px solid ${NHS_COLOURS.lightGrey}`,
+          }}
+        >
+          <ul className="space-y-2">
+            {items.map((it) => (
+              <li key={it.label}>
+                <p
+                  className="text-xs font-semibold"
+                  style={{ color: NHS_COLOURS.darkText }}
+                >
+                  {it.label}
+                </p>
+                <p
+                  className="text-xs leading-snug"
+                  style={{ color: NHS_COLOURS.secondaryText }}
+                >
+                  {it.description}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </span>
+  );
+}
+
+/** A field label with an optional "i" options-info button. */
+function FieldLabel({
+  children,
+  info,
+}: {
+  children: React.ReactNode;
+  info?: ReadonlyArray<{ label: string; description: string }>;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 mb-1">
+      <span className="text-sm font-medium" style={{ color: NHS_COLOURS.darkText }}>
+        {children}
+      </span>
+      {info && <OptionsInfo items={info} />}
+    </div>
   );
 }
 
