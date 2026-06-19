@@ -44,7 +44,9 @@ export default function BasicDataStep({
 }: BasicDataStepProps) {
   const [data, setData] = useState<BasicData>(initialData);
   const [otherUser, setOtherUser] = useState("");
+  const [agenticUnknown, setAgenticUnknown] = useState(false);
 
+  const agenticBlocked = agenticUnknown;
   const determinismBlocked = data.determinism === 3;
   const regulatoryBlocked = data.regulatoryAwareness === "No";
   const deviceClassBlocked = data.deviceClass === 6;
@@ -52,6 +54,7 @@ export default function BasicDataStep({
     data.toolName.trim() !== "" &&
     data.autonomyTier > 0 &&
     data.agentic !== undefined &&
+    !agenticBlocked &&
     data.deviceClass > 0 &&
     !deviceClassBlocked &&
     data.determinism > 0 &&
@@ -260,8 +263,26 @@ export default function BasicDataStep({
             goes — rather than producing a single output.
           </p>
           <select
-            value={data.agentic === undefined ? "" : String(data.agentic)}
-            onChange={(e) => update("agentic", e.target.value === "true")}
+            value={
+              agenticUnknown
+                ? "unknown"
+                : data.agentic === undefined
+                  ? ""
+                  : String(data.agentic)
+            }
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "unknown") {
+                setAgenticUnknown(true);
+                setData((prev) => ({
+                  ...prev,
+                  agentic: undefined as unknown as boolean,
+                }));
+              } else {
+                setAgenticUnknown(false);
+                update("agentic", v === "true");
+              }
+            }}
             className={inputClass}
             style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
           >
@@ -273,8 +294,22 @@ export default function BasicDataStep({
                 {opt.label}
               </option>
             ))}
+            <option value="unknown">Unknown</option>
           </select>
-          {selectedAgentic && <Blurb>{selectedAgentic.description}</Blurb>}
+          {!agenticUnknown && selectedAgentic && (
+            <Blurb>{selectedAgentic.description}</Blurb>
+          )}
+          {agenticBlocked && (
+            <Blocked title="Assessment cannot proceed without this information">
+              Whether a tool is agentic — planning and carrying out a multi-step
+              sequence of actions — affects the minimum complexity scores applied
+              to oversight, validation, and monitoring, and for an autonomous
+              tool holds them at the maximum. Without this information, the
+              framework cannot calculate accurate scoring floors and the
+              assessment would be unreliable. Please consult the tool&apos;s
+              technical documentation or development team before proceeding.
+            </Blocked>
+          )}
         </div>
 
         <div>
