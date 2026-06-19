@@ -122,7 +122,7 @@ export const dimensions: Dimension[] = [
       "Complex data flows — multiple organisations, cross-jurisdictional processing, or novel arrangements where lawful basis is uncertain or contested. Significant IG work required, potentially including specialist legal advice."
     ),
     whyItMatters:
-      "Underestimating IG complexity risks both legal non-compliance and loss of public trust.",
+      "Underestimating the complexity of information governance risks not only legal non-compliance — a misinterpreted or inadequate lawful basis, a DPIA that does not withstand scrutiny, data flows that result in breaches of patient privacy — but the erosion of the public trust that the NHS depends on to use data for all secondary purposes. Complex flows across organisations, jurisdictions, or into commercial cloud infrastructure compound both risks, and resolving them is rarely as quick as a deployment timetable assumes.",
   },
   {
     id: "C4",
