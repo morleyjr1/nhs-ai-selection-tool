@@ -286,17 +286,7 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
                 </a>{" "}
                 (CERSI-AI / University of Birmingham) approaches the same question
                 from a harms-and-controls angle. We recommend using it alongside
-                this framework; an interactive prototype is at{" "}
-                <a
-                  href="https://aireadiness.uk/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                  style={{ color: NHS_COLOURS.blue }}
-                >
-                  aireadiness.uk
-                </a>
-                .
+                this framework.
               </p>
             </div>
             <p

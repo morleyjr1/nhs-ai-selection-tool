@@ -8,8 +8,8 @@
 ## Context
 
 The AI Readiness Checklist (CERSI-AI / University of Birmingham; NHS England and
-Health Foundation funded; a Feb 2026 consultation draft, prototype at
-aireadiness.uk) assesses readiness for a *specific* AI tool from a
+Health Foundation funded; a Feb 2026 consultation draft) assesses readiness for
+a *specific* AI tool from a
 **harms-and-controls** angle: 20 causes of harm in 5 categories, 18 controls in 5
 categories, and a gap analysis. It covers the same territory as this framework
 but from a different direction (our framework runs complexity → readiness → gaps;
@@ -29,8 +29,7 @@ Concretely:
 1. **Catalogue.** Added to `readinessResources` (mapped to R1, R4, R7, R9, R10,
    R11), so it surfaces in the readiness card toggles and per-gap tools.
 2. **Featured on the landing page** as a recommended companion source (a callout
-   in "Sources and evidence base"), linking the CERSI-AI project page and the
-   aireadiness.uk prototype.
+   in "Sources and evidence base"), linking the CERSI-AI project page.
 3. **Featured in results.** The "Build readiness first" panel recommends it as a
    controls-based companion pass.
 4. **Crosswalk in the user guide** (section 11): maps its five control categories
@@ -45,8 +44,8 @@ Concretely:
 
 ## Notes
 
-- Primary link is the CERSI-AI project page (stable); the aireadiness.uk
-  prototype is referenced in text (its direct fetch timed out during build — worth
-  reconfirming it's live before wider release).
+- The canonical link is the CERSI-AI project page
+  (https://www.cersi-ai.org/the-ai-readiness-checklist/). An earlier
+  `aireadiness.uk` reference was incorrect and has been removed.
 - It is a consultation draft (v5), so the catalogue note flags its status; revisit
   the links when a final version is published.
