@@ -343,6 +343,7 @@ export const dimensions: Dimension[] = [
       "Quantity match: Has the organisation checked, variable by variable, whether the data this tool requires are available and accessible?",
       "Quality match: Is data quality in the relevant domains good enough for this tool? Are there known issues — missing fields, inconsistent coding, outdated records?",
       "Timeliness match: Can the organisation provide data at the frequency the tool requires? Does infrastructure support real-time feeds if needed?",
+      "Capability: Does the organisation have the data-engineering capacity to build and maintain the required extracts, mappings, and feeds on an ongoing basis, not only at go-live?",
     ],
     scoreDescriptors: r(
       "Does not systematically collect or cannot access some required data inputs. Non-standardised formats. Significant preparatory work needed.",
@@ -475,9 +476,9 @@ export const dimensions: Dimension[] = [
       "Can users feed back on performance, and is there a process for acting on that feedback?",
     ],
     scoreDescriptors: r(
-      "No evaluation plan. No success metric, no baseline, no impact assessment process.",
-      "Defined success metrics and baseline. Before-and-after comparison feasible. May lack capacity for complex causal analysis.",
-      "Expertise or partnerships for proportionate impact evaluation. Can design approaches, establish baselines, account for confounders."
+      "No evaluation plan: no defined success metric, no baseline, and no process for assessing whether the tool makes a difference in practice.",
+      "Defined success metrics and an established baseline, with before-and-after comparison feasible. May lack the capacity for more complex causal analysis where the tool’s effect is mediated or delayed.",
+      "Expertise or partnerships for impact evaluation proportionate to the tool’s risk. Can design appropriate approaches, establish baselines, account for confounders, and assess variation across patient groups."
     ),
     whyItMatters:
       "Without evaluation capacity, an organisation cannot learn from its AI deployments. It cannot determine what worked, what did not, and what should be done differently next time. This perpetuates a cycle of adoption without evidence.",
@@ -499,9 +500,9 @@ export const dimensions: Dimension[] = [
       "Has the organisation defined what an acceptable error rate looks like, including categories of errors that should never occur?",
     ],
     scoreDescriptors: r(
-      "No systematic AI safety process. Ad hoc hazard identification. No AI-specific incident reporting.",
-      "Clinical safety processes in place, can produce AI safety assessments. Limited AI-specific failure experience. Can manage well-defined failure modes.",
-      "Safety processes adapted to AI challenges. Can respond to monitoring signals. Can escalate and withdraw rapidly. AI-specific incident reporting."
+      "No systematic AI safety process. Hazard identification is ad hoc, and there is no AI-specific incident reporting or clinical safety case.",
+      "Established clinical safety processes that can produce AI safety assessments, but limited experience of AI-specific failure modes. Can manage well-defined hazards but may not anticipate silent degradation or context-dependent error.",
+      "Safety processes adapted to AI-specific challenges. Can respond to monitoring signals, escalate and withdraw the tool rapidly, and capture AI-related events through dedicated incident reporting feeding corrective action."
     ),
     whyItMatters:
       "AI-specific safety challenges — silent failure, distributional shift, automation bias — require safety processes that go beyond traditional clinical risk management. Organisations with only generic safety infrastructure may not detect AI-specific failure modes until harm occurs.",
@@ -519,6 +520,7 @@ export const dimensions: Dimension[] = [
       "Were patients and the public involved in the decision to procure and deploy — genuinely sought, not just communicated after the fact?",
       "Have patients and the public been told the tool is deployed? Is information about what it does and how it affects care in the public domain?",
       "Does the organisation have the capacity to assess and monitor bias and equity impacts on an ongoing basis?",
+      "Is there an accessible route for patients and the public to raise concerns about the tool once it is in use, and a process to act on what they raise?",
     ],
     scoreDescriptors: r(
       "No patient/public involvement. No public-facing information. No equity impact process.",
@@ -561,6 +563,7 @@ export const dimensions: Dimension[] = [
       "Does the organisation have procurement processes that address AI-specific risks — vendor transparency, data rights, ongoing vendor management?",
       "Has the organisation secured contractual protections proportionate to vendor dependency — data portability, audit rights, performance guarantees, liability, exit provisions?",
       "Has the organisation assessed the depth of vendor dependency — and is that dependency a conscious, risk-managed decision?",
+      "Is there a contingency plan if the vendor fails, is acquired, or withdraws the product — including how continuity of care would be maintained if the tool became unavailable?",
     ],
     scoreDescriptors: r(
       "No AI-specific procurement process. Standard NHS procurement without AI due diligence. No exit strategy for this tool.",

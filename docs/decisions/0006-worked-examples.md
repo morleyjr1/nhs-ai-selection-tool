@@ -1,7 +1,7 @@
 # 0006 — Worked-example anchors: anonymised in the frontend
 
-- **Status:** Accepted (anchors + landing introduction). Per-domain illustrative
-  answers and the complexity-card toggle are an in-progress follow-up.
+- **Status:** Accepted. Anchors, landing introduction, and per-domain
+  illustrative answers (complexity-card toggle) are all implemented.
 - **Date:** 2026-06-18
 - **Affects:** `lib/anchors.ts`, `components/LandingPage.tsx`
 

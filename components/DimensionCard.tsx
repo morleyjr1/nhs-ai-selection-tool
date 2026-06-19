@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { getWhoToAsk, getBestPractice } from "../lib/dimensions";
 import { getReadinessResources } from "../lib/readiness-resources";
+import { getWorkedExamples } from "../lib/worked-examples";
+import { getAnchor } from "../lib/anchors";
 import type { Dimension } from "../lib/dimensions";
 import type { Score, BasicData } from "../lib/types";
 import {
@@ -58,11 +60,14 @@ export default function DimensionCard({
   const [expanded, setExpanded] = useState(false);
   const [showWhoToAsk, setShowWhoToAsk] = useState(false);
   const [showResources, setShowResources] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   const whoToAsk = getWhoToAsk(dimension.id);
   const resources =
     side === "readiness" ? getReadinessResources(dimension.id) : [];
   const bestPractice =
     side === "readiness" ? getBestPractice(dimension.id) : undefined;
+  const examples =
+    side === "complexity" ? getWorkedExamples(dimension.id) : [];
   const scores: Score[] = [1, 2, 3];
   const colourMap =
     side === "readiness" ? READINESS_SCORE_COLOURS : SCORE_COLOURS;
@@ -481,6 +486,57 @@ export default function DimensionCard({
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Example answers (illustrative only) — complexity dimensions */}
+      {examples.length > 0 && (
+        <div
+          className="mt-3 pt-3 border-t"
+          style={{ borderColor: NHS_COLOURS.lightGrey }}
+        >
+          <button
+            onClick={() => setShowExamples((v) => !v)}
+            className="text-xs underline font-medium"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            {showExamples
+              ? "Hide example answers"
+              : `Example answers (illustrative only) (${examples.length})`}
+          </button>
+          {showExamples && (
+            <div className="mt-2 space-y-2">
+              <p className="text-xs italic" style={{ color: NHS_COLOURS.grey }}>
+                Illustrative composites, not assessments of real products.
+              </p>
+              {examples.map((ex) => {
+                const a = getAnchor(ex.anchorId);
+                return (
+                  <div key={ex.anchorId}>
+                    <p
+                      className="text-xs"
+                      style={{ color: NHS_COLOURS.darkText }}
+                    >
+                      <span className="font-semibold">
+                        {a ? a.displayName : ex.anchorId}
+                      </span>
+                      {a
+                        ? ` — ${a.autonomyTierLabel}${a.agentic ? ", agentic" : ""}`
+                        : ""}
+                      {" · "}
+                      <span className="font-semibold">Score {ex.score}</span>
+                    </p>
+                    <p
+                      className="text-xs"
+                      style={{ color: NHS_COLOURS.secondaryText }}
+                    >
+                      {ex.text}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
