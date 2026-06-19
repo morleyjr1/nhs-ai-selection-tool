@@ -422,7 +422,7 @@ export default function SelectionTool() {
           borderColor: NHS_COLOURS.lightGrey,
         }}
       >
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={() => setShowLanding(true)}
@@ -447,6 +447,15 @@ export default function SelectionTool() {
               </p>
             </div>
           </button>
+          <a
+            href="/guide"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium shrink-0"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            User guide ↗
+          </a>
         </div>
       </header>
 

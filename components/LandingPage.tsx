@@ -336,6 +336,20 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
             </button>
           )}
 
+          {/* User guide link */}
+          <p className="text-sm mt-5">
+            New to the framework?{" "}
+            <a
+              href="/guide"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+              style={{ color: NHS_COLOURS.blue }}
+            >
+              Read the user guide ↗
+            </a>
+          </p>
+
           {/* Footer note */}
           <p
             className="text-xs mt-8"
