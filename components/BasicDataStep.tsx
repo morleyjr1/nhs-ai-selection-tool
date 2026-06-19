@@ -9,6 +9,7 @@ import {
   AUTONOMY_TIERS,
   AGENTIC_OPTIONS,
   DEVICE_CLASSES,
+  DETERMINISM_OPTIONS,
   USER_GROUPS,
   DEPLOYMENT_SCOPES,
   ADOPTION_STAGES,
@@ -25,6 +26,12 @@ interface BasicDataStepProps {
   /** Called whenever the tool name or manufacturer name changes — drives real-time lookup */
   onLookupFieldsChange?: (toolName: string, manufacturerName?: string) => void;
 }
+
+const DETERMINISM_INFO: Record<number, string> = {
+  1: "Given the same input, the tool always produces the same output. Rule-based systems, simple calculators, and look-up tools are typically deterministic.",
+  2: "The tool may produce different outputs from the same input due to randomness in its model (e.g. large language models, neural networks with sampling). Stochastic tools raise minimum scoring floors on oversight, validation, and monitoring dimensions.",
+  3: "You are not sure whether the tool is deterministic or stochastic.",
+};
 
 export default function BasicDataStep({
   initialData,
@@ -55,7 +62,6 @@ export default function BasicDataStep({
   function update<K extends keyof BasicData>(field: K, value: BasicData[K]) {
     setData((prev) => {
       const next = { ...prev, [field]: value };
-      // Notify parent of lookup-relevant field changes in real time
       if (
         (field === "toolName" || field === "manufacturerName") &&
         onLookupFieldsChange
@@ -80,6 +86,15 @@ export default function BasicDataStep({
     }));
   }
 
+  // ── Shared styling ──
+  const inputClass = "w-full px-3 py-2 rounded border text-sm";
+  const inputStyle = { borderColor: NHS_COLOURS.grey, color: NHS_COLOURS.darkText };
+  const labelClass = "block text-sm font-medium mb-1";
+  const labelStyle = { color: NHS_COLOURS.darkText };
+  const hintStyle = { color: NHS_COLOURS.secondaryText };
+  const selectedTier = AUTONOMY_TIERS.find((t) => t.value === data.autonomyTier);
+  const selectedAgentic = AGENTIC_OPTIONS.find((o) => o.value === data.agentic);
+
   return (
     <div className="max-w-3xl mx-auto">
       <h2
@@ -88,97 +103,75 @@ export default function BasicDataStep({
       >
         Basic Data
       </h2>
-      <p className="mb-8" style={{ color: NHS_COLOURS.secondaryText }}>
+      <p className="mb-6" style={hintStyle}>
         Provide information about the AI tool and its deployment context. Fields
         marked with * are required.
       </p>
 
-      <div className="space-y-6">
-        {/* Organisation name */}
+      {/* ── Section: Tool identification ── */}
+      <Section title="Tool identification">
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Organisation name
           </label>
           <input
             type="text"
             value={data.orgName ?? ""}
             onChange={(e) => update("orgName", e.target.value)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
+            className={inputClass}
+            style={inputStyle}
             placeholder="e.g. Guy's and St Thomas' NHS Foundation Trust"
           />
         </div>
 
-        {/* Q1: Tool name * */}
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Q1. Tool name *
           </label>
           <input
             type="text"
             value={data.toolName}
             onChange={(e) => update("toolName", e.target.value)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
+            className={inputClass}
+            style={inputStyle}
             placeholder="e.g. the product name"
           />
         </div>
 
-        {/* Q1b: Manufacturer / developer name */}
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Q1b. Manufacturer or developer name
           </label>
           <input
             type="text"
             value={data.manufacturerName ?? ""}
             onChange={(e) => update("manufacturerName", e.target.value)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
+            className={inputClass}
+            style={inputStyle}
             placeholder="e.g. Microsoft / Nuance"
           />
-          <p
-            className="text-xs mt-1"
-            style={{ color: NHS_COLOURS.secondaryText }}
-          >
+          <Blurb>
             Adding the manufacturer name helps narrow down search results,
             particularly for tools with generic names.
-          </p>
+          </Blurb>
         </div>
 
-        {/* Q1c: Product URL */}
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Q1c. Product URL
           </label>
           <input
             type="url"
             value={data.productUrl ?? ""}
             onChange={(e) => update("productUrl", e.target.value)}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
-            placeholder="e.g. https://healthairegister.com/radiology/products/kheiron-mia"
+            className={inputClass}
+            style={inputStyle}
+            placeholder="e.g. https://…"
           />
         </div>
 
-        {/* Tool Intelligence panel — appears below tool identification fields */}
         <div>
-          <p
-            className="text-xs mb-2"
-            style={{ color: NHS_COLOURS.secondaryText }}
-          >
+          <p className="text-xs mb-2" style={hintStyle}>
             We will automatically search public databases (FDA, PubMed,
             ClinicalTrials.gov) for this tool. This may take a moment.
           </p>
@@ -189,266 +182,136 @@ export default function BasicDataStep({
           />
         </div>
 
-        {/* Q2: Tool purpose */}
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Q2. Tool purpose
           </label>
           <textarea
             value={data.toolPurpose ?? ""}
             onChange={(e) => update("toolPurpose", e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
+            className={inputClass}
+            style={inputStyle}
             placeholder="What does this tool do?"
           />
         </div>
 
-        {/* Q3: Problem addressed */}
         <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+          <label className={labelClass} style={labelStyle}>
             Q3. Problem addressed
           </label>
           <textarea
             value={data.toolProblem ?? ""}
             onChange={(e) => update("toolProblem", e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ borderColor: NHS_COLOURS.grey }}
+            className={inputClass}
+            style={inputStyle}
             placeholder="What problem does this tool solve?"
           />
         </div>
+      </Section>
 
-        {/* Q4: Autonomy tier * */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+      {/* ── Section: Function and behaviour ── */}
+      <Section title="Function and behaviour">
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q4a. What function is the tool being used for? *
-          </legend>
-          <div className="space-y-3">
+          </label>
+          <select
+            value={data.autonomyTier || ""}
+            onChange={(e) =>
+              update(
+                "autonomyTier",
+                Number(e.target.value) as BasicData["autonomyTier"],
+              )
+            }
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select a function…
+            </option>
             {AUTONOMY_TIERS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-start gap-2 text-sm cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="autonomyTier"
-                  className="mt-1 shrink-0"
-                  checked={data.autonomyTier === opt.value}
-                  onChange={() =>
-                    update(
-                      "autonomyTier",
-                      opt.value as BasicData["autonomyTier"],
-                    )
-                  }
-                />
-                <span>
-                  <span
-                    className="font-medium"
-                    style={{ color: NHS_COLOURS.darkText }}
-                  >
-                    {opt.value}. {opt.label}
-                  </span>
-                  <span
-                    className="block text-xs mt-0.5 leading-snug"
-                    style={{ color: NHS_COLOURS.secondaryText }}
-                  >
-                    {opt.examples}
-                  </span>
-                </span>
-              </label>
+              <option key={opt.value} value={opt.value}>
+                {opt.value}. {opt.label}
+              </option>
             ))}
-          </div>
-        </fieldset>
+          </select>
+          {selectedTier && <Blurb>{selectedTier.examples}</Blurb>}
+        </div>
 
-        {/* Q4b: Agentic * */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q4b. Is the tool agentic? *
-          </legend>
-          <p
-            className="text-xs mb-2"
-            style={{ color: NHS_COLOURS.secondaryText }}
-          >
+          </label>
+          <p className="text-xs mb-1.5" style={hintStyle}>
             An agentic tool plans and carries out a multi-step sequence of
             actions towards a goal — choosing what to do next and adapting as it
             goes — rather than producing a single output.
           </p>
-          <div className="space-y-3">
+          <select
+            value={data.agentic === undefined ? "" : String(data.agentic)}
+            onChange={(e) => update("agentic", e.target.value === "true")}
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
             {AGENTIC_OPTIONS.map((opt) => (
-              <label
-                key={String(opt.value)}
-                className="flex items-start gap-2 text-sm cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="agentic"
-                  className="mt-1 shrink-0"
-                  checked={data.agentic === opt.value}
-                  onChange={() => update("agentic", opt.value)}
-                />
-                <span>
-                  <span
-                    className="font-medium"
-                    style={{ color: NHS_COLOURS.darkText }}
-                  >
-                    {opt.label}
-                  </span>
-                  <span
-                    className="block text-xs mt-0.5 leading-snug"
-                    style={{ color: NHS_COLOURS.secondaryText }}
-                  >
-                    {opt.description}
-                  </span>
-                </span>
-              </label>
+              <option key={String(opt.value)} value={String(opt.value)}>
+                {opt.label}
+              </option>
             ))}
-          </div>
-        </fieldset>
+          </select>
+          {selectedAgentic && <Blurb>{selectedAgentic.description}</Blurb>}
+        </div>
 
-        {/* Q4c: Determinism (stochastic vs deterministic) * */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q4c. Is the tool stochastic or deterministic? *
-          </legend>
-          <div className="space-y-3">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 1}
-                onChange={() =>
-                  update("determinism", 1 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Deterministic
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  Given the same input, the tool always produces the same output.
-                  Rule-based systems, simple calculators, and look-up tools are
-                  typically deterministic.
-                </p>
-              </div>
-            </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 2}
-                onChange={() =>
-                  update("determinism", 2 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Stochastic
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  The tool may produce different outputs from the same input due
-                  to randomness in its model (e.g. large language models, neural
-                  networks with sampling). Stochastic tools raise minimum scoring
-                  floors on oversight, validation, and monitoring dimensions.
-                </p>
-              </div>
-            </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="determinism"
-                className="mt-1"
-                checked={data.determinism === 3}
-                onChange={() =>
-                  update("determinism", 3 as BasicData["determinism"])
-                }
-              />
-              <div>
-                <span
-                  className="font-medium"
-                  style={{ color: NHS_COLOURS.darkText }}
-                >
-                  Unknown
-                </span>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: NHS_COLOURS.secondaryText }}
-                >
-                  You are not sure whether the tool is deterministic or
-                  stochastic.
-                </p>
-              </div>
-            </label>
-          </div>
-
-          {/* Unknown determinism warning */}
-          {determinismBlocked && (
-            <div
-              className="rounded-lg p-4 mt-3 border-l-4"
-              style={{
-                backgroundColor: "#FEF3F2",
-                borderLeftColor: NHS_COLOURS.red,
-              }}
-            >
-              <p
-                className="font-semibold text-sm"
-                style={{ color: NHS_COLOURS.red }}
-              >
-                Assessment cannot proceed without this information
-              </p>
-              <p
-                className="text-sm mt-1"
-                style={{ color: NHS_COLOURS.darkText }}
-              >
-                Whether a tool is deterministic or stochastic affects the minimum
-                complexity scores applied to several dimensions (human oversight,
-                validation, and monitoring). Without this information, the
-                framework cannot calculate accurate scoring floors and the
-                assessment would be unreliable. Please consult the tool&apos;s
-                technical documentation or development team before proceeding.
-              </p>
-            </div>
-          )}
-        </fieldset>
-
-        {/* Q5: Intended users */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
+          </label>
+          <select
+            value={data.determinism || ""}
+            onChange={(e) =>
+              update(
+                "determinism",
+                Number(e.target.value) as BasicData["determinism"],
+              )
+            }
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
           >
+            <option value="" disabled>
+              Select…
+            </option>
+            {DETERMINISM_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {data.determinism > 0 && <Blurb>{DETERMINISM_INFO[data.determinism]}</Blurb>}
+          {determinismBlocked && (
+            <Blocked title="Assessment cannot proceed without this information">
+              Whether a tool is deterministic or stochastic affects the minimum
+              complexity scores applied to several dimensions (human oversight,
+              validation, and monitoring). Without this information, the
+              framework cannot calculate accurate scoring floors and the
+              assessment would be unreliable. Please consult the tool&apos;s
+              technical documentation or development team before proceeding.
+            </Blocked>
+          )}
+        </div>
+      </Section>
+
+      {/* ── Section: Deployment context ── */}
+      <Section title="Deployment context">
+        <fieldset>
+          <legend className={labelClass} style={labelStyle}>
             Q5. Intended users
           </legend>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {USER_GROUPS.map((group) => (
               <label key={group} className="flex items-center gap-2 text-sm">
                 <input
@@ -465,88 +328,104 @@ export default function BasicDataStep({
               type="text"
               value={otherUser}
               onChange={(e) => setOtherUser(e.target.value)}
-              className="mt-2 w-full px-3 py-2 rounded border text-sm"
-              style={{ borderColor: NHS_COLOURS.grey }}
+              className={`mt-2 ${inputClass}`}
+              style={inputStyle}
               placeholder="Please specify"
             />
           )}
         </fieldset>
 
-        {/* Q6: Deployment scope — radio buttons */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q6. Deployment scope
-          </legend>
-          <div className="space-y-2">
+          </label>
+          <select
+            value={data.scope ?? ""}
+            onChange={(e) => update("scope", e.target.value)}
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
             {DEPLOYMENT_SCOPES.map((scope) => (
-              <label key={scope} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="scope"
-                  checked={data.scope === scope}
-                  onChange={() => update("scope", scope)}
-                />
-                <span style={{ color: NHS_COLOURS.darkText }}>{scope}</span>
-              </label>
+              <option key={scope} value={scope}>
+                {scope}
+              </option>
             ))}
-          </div>
-        </fieldset>
+          </select>
+        </div>
 
-        {/* Q7: Adoption stage — radio buttons */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q7. Adoption stage
-          </legend>
-          <div className="space-y-2">
-            {ADOPTION_STAGES.map((stage) => (
-              <label key={stage} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="adoptionStage"
-                  checked={data.adoptionStage === stage}
-                  onChange={() => update("adoptionStage", stage)}
-                />
-                <span style={{ color: NHS_COLOURS.darkText }}>{stage}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {/* Q8: Device classification * */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
+          </label>
+          <select
+            value={data.adoptionStage ?? ""}
+            onChange={(e) => update("adoptionStage", e.target.value)}
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
           >
-            Q8. Device classification *
-          </legend>
-          <div className="space-y-2">
-            {DEVICE_CLASSES.map((opt) => (
-              <label key={opt.value} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="deviceClass"
-                  checked={data.deviceClass === opt.value}
-                  onChange={() =>
-                    update(
-                      "deviceClass",
-                      opt.value as BasicData["deviceClass"],
-                    )
-                  }
-                />
-                <span style={{ color: NHS_COLOURS.darkText }}>{opt.label}</span>
-              </label>
+            <option value="" disabled>
+              Select…
+            </option>
+            {ADOPTION_STAGES.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
             ))}
-          </div>
+          </select>
+        </div>
 
-          {/* Helper: MHRA medical device software/apps guidance */}
-          <p className="text-xs mt-2" style={{ color: NHS_COLOURS.secondaryText }}>
+        <div>
+          <label className={labelClass} style={labelStyle}>
+            Q10. Developer type
+          </label>
+          <select
+            value={data.developer ?? ""}
+            onChange={(e) => update("developer", e.target.value)}
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
+            {DEVELOPER_TYPES.map((dt) => (
+              <option key={dt} value={dt}>
+                {dt}
+              </option>
+            ))}
+          </select>
+        </div>
+      </Section>
+
+      {/* ── Section: Regulatory and safety ── */}
+      <Section title="Regulatory and safety">
+        <div>
+          <label className={labelClass} style={labelStyle}>
+            Q8. Device classification *
+          </label>
+          <select
+            value={data.deviceClass || ""}
+            onChange={(e) =>
+              update(
+                "deviceClass",
+                Number(e.target.value) as BasicData["deviceClass"],
+              )
+            }
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
+            {DEVICE_CLASSES.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <Blurb>
             Unsure how this tool is classified? See the MHRA guidance on{" "}
             <a
               href="https://www.gov.uk/government/publications/medical-devices-software-applications-apps"
@@ -568,63 +447,37 @@ export default function BasicDataStep({
               NHS Buyer&apos;s Guide to AI in Health and Care
             </a>
             .
-          </p>
-
-          {/* Unknown device class warning */}
+          </Blurb>
           {deviceClassBlocked && (
-            <div
-              className="rounded-lg p-4 mt-3 border-l-4"
-              style={{
-                backgroundColor: "#FEF3F2",
-                borderLeftColor: NHS_COLOURS.red,
-              }}
-            >
-              <p
-                className="font-semibold text-sm"
-                style={{ color: NHS_COLOURS.red }}
-              >
-                Assessment cannot proceed without this information
-              </p>
-              <p
-                className="text-sm mt-1"
-                style={{ color: NHS_COLOURS.darkText }}
-              >
-                The device classification determines the minimum safety and
-                monitoring floors applied to the assessment. Without knowing
-                whether this tool is a medical device — and if so, its risk
-                class — the framework cannot calculate accurate scoring floors.
-                Please consult the MHRA guidance on software and AI as a medical
-                device, or check with the vendor.
-              </p>
-            </div>
+            <Blocked title="Assessment cannot proceed without this information">
+              The device classification determines the minimum safety and
+              monitoring floors applied to the assessment. Without knowing
+              whether this tool is a medical device — and if so, its risk class —
+              the framework cannot calculate accurate scoring floors. Please
+              consult the MHRA guidance on software and AI as a medical device,
+              or check with the vendor.
+            </Blocked>
           )}
-        </fieldset>
+        </div>
 
-        {/* Q9: Regulatory awareness * */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
+        <div>
+          <label className={labelClass} style={labelStyle}>
             Q9. Is the development team aware of relevant regulatory
             requirements? *
-          </legend>
-          <div className="flex gap-4">
-            {(["Yes", "No"] as const).map((val) => (
-              <label key={val} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="regulatoryAwareness"
-                  checked={data.regulatoryAwareness === val}
-                  onChange={() => update("regulatoryAwareness", val)}
-                />
-                <span style={{ color: NHS_COLOURS.darkText }}>{val}</span>
-              </label>
-            ))}
-          </div>
-
-          {/* Helper: AI and Digital Regulations Service */}
-          <p className="text-xs mt-2" style={{ color: NHS_COLOURS.secondaryText }}>
+          </label>
+          <select
+            value={data.regulatoryAwareness ?? ""}
+            onChange={(e) => update("regulatoryAwareness", e.target.value)}
+            className={inputClass}
+            style={{ ...inputStyle, backgroundColor: NHS_COLOURS.white }}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+          <Blurb>
             Not sure what applies? The{" "}
             <a
               href="https://www.digitalregulations.innovation.nhs.uk/"
@@ -637,63 +490,21 @@ export default function BasicDataStep({
             </a>{" "}
             sets out which regulations, approvals, and governance steps apply
             before an AI tool is deployed in the NHS.
-          </p>
-
-          {/* Regulatory "No" warning */}
+          </Blurb>
           {regulatoryBlocked && (
-            <div
-              className="rounded-lg p-4 mt-3 border-l-4"
-              style={{
-                backgroundColor: "#FEF3F2",
-                borderLeftColor: NHS_COLOURS.red,
-              }}
-            >
-              <p
-                className="font-semibold text-sm"
-                style={{ color: NHS_COLOURS.red }}
-              >
-                Assessment cannot proceed without regulatory awareness
-              </p>
-              <p
-                className="text-sm mt-1"
-                style={{ color: NHS_COLOURS.darkText }}
-              >
-                If the development team is not aware of the relevant regulatory
-                requirements for this tool, the assessment cannot reliably score
-                safety, validation, or monitoring dimensions. The development
-                team should be directed to the MHRA guidance on software and AI
-                as a medical device before this assessment is completed.
-              </p>
-            </div>
+            <Blocked title="Assessment cannot proceed without regulatory awareness">
+              If the development team is not aware of the relevant regulatory
+              requirements for this tool, the assessment cannot reliably score
+              safety, validation, or monitoring dimensions. The development team
+              should be directed to the MHRA guidance on software and AI as a
+              medical device before this assessment is completed.
+            </Blocked>
           )}
-        </fieldset>
-
-        {/* Q10: Developer type — radio buttons */}
-        <fieldset>
-          <legend
-            className="block text-sm font-medium mb-2"
-            style={{ color: NHS_COLOURS.darkText }}
-          >
-            Q10. Developer type
-          </legend>
-          <div className="space-y-2">
-            {DEVELOPER_TYPES.map((dt) => (
-              <label key={dt} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="developer"
-                  checked={data.developer === dt}
-                  onChange={() => update("developer", dt)}
-                />
-                <span style={{ color: NHS_COLOURS.darkText }}>{dt}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </div>
+        </div>
+      </Section>
 
       {/* Navigation */}
-      <div className="flex justify-between mt-10">
+      <div className="flex justify-between mt-8">
         <button
           onClick={onBack}
           className="px-6 py-3 rounded font-medium text-sm"
@@ -719,6 +530,68 @@ export default function BasicDataStep({
           Continue to Complexity Assessment →
         </button>
       </div>
+    </div>
+  );
+}
+
+/** A titled card grouping related fields. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="rounded-lg border p-5 mb-5"
+      style={{
+        borderColor: NHS_COLOURS.lightGrey,
+        backgroundColor: NHS_COLOURS.white,
+      }}
+    >
+      <h3
+        className="text-xs font-bold uppercase tracking-wide mb-4"
+        style={{ color: NHS_COLOURS.darkBlue }}
+      >
+        {title}
+      </h3>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+/** Small muted hint / guidance text shown beneath a field. */
+function Blurb({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className="text-xs mt-1.5 leading-snug"
+      style={{ color: NHS_COLOURS.secondaryText }}
+    >
+      {children}
+    </p>
+  );
+}
+
+/** Red "assessment cannot proceed" banner. */
+function Blocked({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-lg p-4 mt-3 border-l-4"
+      style={{ backgroundColor: "#FEF3F2", borderLeftColor: NHS_COLOURS.red }}
+    >
+      <p className="font-semibold text-sm" style={{ color: NHS_COLOURS.red }}>
+        {title}
+      </p>
+      <p className="text-sm mt-1" style={{ color: NHS_COLOURS.darkText }}>
+        {children}
+      </p>
     </div>
   );
 }
