@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { NHS_COLOURS } from "../lib/constants";
 import { getSavedSummary, clearSavedState } from "../lib/save";
+import { anchors } from "../lib/anchors";
 
 const STEP_NAMES = ["Framing", "Basic Data", "Complexity", "Readiness", "Results"];
 
@@ -231,6 +232,33 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               and review the readiness scores side by side, paying particular
               attention to the dimensions where cumulative demand is highest.
             </p>
+
+            <h2
+              className="text-base font-semibold mb-3"
+              style={{ color: NHS_COLOURS.darkBlue }}
+            >
+              The worked examples
+            </h2>
+            <p
+              className="text-sm mb-3"
+              style={{ color: NHS_COLOURS.darkText }}
+            >
+              Throughout the tool you will see illustrative example answers drawn
+              from eight archetypal tools, spanning the range from administrative
+              to fully autonomous and agentic. They are composites used to show
+              how different kinds of tool tend to score, and to make the
+              reasoning concrete — they are <em>for illustration only</em> and
+              are not assessments of real products.
+            </p>
+            <ul className="mb-4 space-y-2">
+              {anchors.map((a) => (
+                <li key={a.id} className="text-sm" style={{ color: NHS_COLOURS.darkText }}>
+                  <span className="font-semibold">{a.displayName}</span>
+                  <span style={{ color: NHS_COLOURS.grey }}> — {a.autonomyTierLabel}{a.agentic ? ", agentic" : ""}</span>
+                  <span style={{ color: NHS_COLOURS.secondaryText }}>. {a.description}</span>
+                </li>
+              ))}
+            </ul>
 
             <h2
               className="text-base font-semibold mb-3"

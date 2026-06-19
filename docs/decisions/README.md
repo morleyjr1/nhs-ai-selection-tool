@@ -23,3 +23,4 @@ from the code. The aim is that the *reasoning* survives, not just the diff.
 - [0003 — Feedback form (store-in-database)](./0003-feedback-form.md) — *Accepted*
 - [0004 — FDA full list + security/data-protection/standards checks](./0004-assurance-checks.md) — *Accepted*
 - [0005 — Readiness-building resource catalogue + surfacing](./0005-readiness-resources.md) — *Accepted*
+- [0006 — Worked-example anchors: anonymised in the frontend](./0006-worked-examples.md) — *Accepted*
