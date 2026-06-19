@@ -266,6 +266,39 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
             >
               Sources and evidence base
             </h2>
+            <div
+              className="rounded-md px-4 py-3 mb-4"
+              style={{
+                backgroundColor: NHS_COLOURS.blue + "0D",
+                border: `1px solid ${NHS_COLOURS.blue}33`,
+              }}
+            >
+              <p className="text-sm" style={{ color: NHS_COLOURS.darkText }}>
+                <strong>Companion tool:</strong> the{" "}
+                <a
+                  href="https://www.cersi-ai.org/the-ai-readiness-checklist/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium"
+                  style={{ color: NHS_COLOURS.blue }}
+                >
+                  AI Readiness Checklist
+                </a>{" "}
+                (CERSI-AI / University of Birmingham) approaches the same question
+                from a harms-and-controls angle. We recommend using it alongside
+                this framework; an interactive prototype is at{" "}
+                <a
+                  href="https://aireadiness.uk/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                  style={{ color: NHS_COLOURS.blue }}
+                >
+                  aireadiness.uk
+                </a>
+                .
+              </p>
+            </div>
             <p
               className="text-sm mb-3"
               style={{ color: NHS_COLOURS.darkText }}

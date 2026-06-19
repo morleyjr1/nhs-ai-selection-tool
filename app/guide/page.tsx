@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { NHS_COLOURS } from "../../lib/constants";
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -70,13 +71,13 @@ export default function GuidePage() {
             NHS AI Selection Tool — User guide
           </span>
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href="/"
               className="text-sm font-medium"
               style={{ color: NHS_COLOURS.blue }}
             >
               ← Back to the tool
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => window.print()}
@@ -505,7 +506,42 @@ export default function GuidePage() {
           answers.
         </P>
 
-        <H2>11. Scope, limitations, and feedback</H2>
+        <H2>11. Relationship to the AI Readiness Checklist</H2>
+        <P>
+          This framework can be used alongside the{" "}
+          <a
+            href="https://www.cersi-ai.org/the-ai-readiness-checklist/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: NHS_COLOURS.blue }}
+          >
+            AI Readiness Checklist
+          </a>{" "}
+          (CERSI-AI / University of Birmingham), which assesses readiness for a
+          specific tool from a harms-and-controls angle. The two line up closely,
+          so they make good companions: where this tool tells you the size of a
+          readiness gap, the checklist helps you enumerate the specific controls
+          that close it.
+        </P>
+        <P>
+          Its five <strong>control</strong> categories map onto our readiness
+          side, and its five <strong>harm</strong> categories onto our complexity
+          side:
+        </P>
+        <UL>
+          <li>Organisational Structure → R1, R7</li>
+          <li>Human Capital → R4, R7</li>
+          <li>Problem Formulation → the framing questions and R1</li>
+          <li>Adoption &amp; Integration → R2, R6, R7</li>
+          <li>Evaluation &amp; Monitoring → R8, R9, R11</li>
+          <li>Workforce &amp; Operational harms → C2, C4, C6, C12</li>
+          <li>Financial harms → C12</li>
+          <li>External harms → C3, C9, C10</li>
+          <li>Service-Outcome harms → C5, C8, C10, C11</li>
+        </UL>
+
+        <H2>12. Scope, limitations, and feedback</H2>
         <P>
           The framework assesses one tool at a time, but readiness is not independent
           across tools: the burden on governance, workforce, infrastructure, and
@@ -518,13 +554,13 @@ export default function GuidePage() {
         </P>
 
         <div className="mt-10 print:hidden">
-          <a
+          <Link
             href="/"
             className="text-sm font-medium"
             style={{ color: NHS_COLOURS.blue }}
           >
             ← Back to the tool
-          </a>
+          </Link>
         </div>
       </main>
     </div>

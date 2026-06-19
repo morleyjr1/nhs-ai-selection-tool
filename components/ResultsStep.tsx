@@ -282,7 +282,18 @@ export default function ResultsStep({
               This tool is workable, but readiness needs building first. Each gap
               below links to external tools and frameworks that can help close
               it — open <strong>Tools</strong> on a gap to see resources specific
-              to that readiness dimension.
+              to that readiness dimension. For a structured, controls-based pass
+              over your readiness, the{" "}
+              <a
+                href="https://www.cersi-ai.org/the-ai-readiness-checklist/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+                style={{ color: NHS_COLOURS.blue }}
+              >
+                AI Readiness Checklist
+              </a>{" "}
+              is a useful companion.
             </p>
           )}
           <div className="space-y-2">

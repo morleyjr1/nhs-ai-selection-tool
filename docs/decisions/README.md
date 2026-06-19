@@ -24,3 +24,4 @@ from the code. The aim is that the *reasoning* survives, not just the diff.
 - [0004 — FDA full list + security/data-protection/standards checks](./0004-assurance-checks.md) — *Accepted*
 - [0005 — Readiness-building resource catalogue + surfacing](./0005-readiness-resources.md) — *Accepted*
 - [0006 — Worked-example anchors: anonymised in the frontend](./0006-worked-examples.md) — *Accepted*
+- [0007 — Integrating the AI Readiness Checklist (link/reference only)](./0007-ai-readiness-checklist.md) — *Accepted*
