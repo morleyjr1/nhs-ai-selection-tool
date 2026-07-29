@@ -553,6 +553,7 @@ export default function GuidePage() {
           tools we have missed — is welcome through the links provided in the tool.
         </P>
 
+        <div id="sources" className="scroll-mt-6" />
         <H2>13. Sources and evidence base</H2>
         <P>The framework draws on:</P>
         <UL>

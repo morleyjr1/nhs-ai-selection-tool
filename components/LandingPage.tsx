@@ -338,6 +338,16 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
             >
               Read the user guide ↗
             </a>
+            {" · "}
+            <a
+              href="/guide#sources"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+              style={{ color: NHS_COLOURS.blue }}
+            >
+              References ↗
+            </a>
           </p>
 
           {/* Footer note */}
