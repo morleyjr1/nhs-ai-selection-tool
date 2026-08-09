@@ -125,12 +125,23 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
             className="text-left rounded-lg p-6 mb-8"
             style={{ backgroundColor: NHS_COLOURS.lightGrey }}
           >
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
+            <details open
+              className="group rounded-md bg-white border mb-2"
+              style={{ borderColor: NHS_COLOURS.blue + "22" }}
             >
-              What this tool does
-            </h2>
+              <summary
+                className="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                What this tool does
+                <span
+                  className="accordion-chevron ml-3 shrink-0"
+                  style={{ color: NHS_COLOURS.grey }}
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
             <p
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
@@ -159,13 +170,26 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               to do, because that depends on knowledge of your organisation that
               no standardised tool can hold.
             </p>
+              </div>
+            </details>
 
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
+            <details
+              className="group rounded-md bg-white border mb-2"
+              style={{ borderColor: NHS_COLOURS.blue + "22" }}
             >
-              Where it fits in your adoption process
-            </h2>
+              <summary
+                className="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                Where it fits in your adoption process
+                <span
+                  className="accordion-chevron ml-3 shrink-0"
+                  style={{ color: NHS_COLOURS.grey }}
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
             <p
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
@@ -189,13 +213,26 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               surface whether a tool is the right fit for your organisation, and
               where your effort should go if you decide to proceed.
             </p>
+              </div>
+            </details>
 
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
+            <details
+              className="group rounded-md bg-white border mb-2"
+              style={{ borderColor: NHS_COLOURS.blue + "22" }}
             >
-              Who it is for
-            </h2>
+              <summary
+                className="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                Who it is for
+                <span
+                  className="accordion-chevron ml-3 shrink-0"
+                  style={{ color: NHS_COLOURS.grey }}
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
             <p
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
@@ -212,13 +249,26 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               knowledge becomes a prompt to consult the right person rather than
               a guess.
             </p>
+              </div>
+            </details>
 
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
+            <details
+              className="group rounded-md bg-white border mb-2"
+              style={{ borderColor: NHS_COLOURS.blue + "22" }}
             >
-              Assessing multiple tools
-            </h2>
+              <summary
+                className="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                Assessing multiple tools
+                <span
+                  className="accordion-chevron ml-3 shrink-0"
+                  style={{ color: NHS_COLOURS.grey }}
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
             <p
               className="text-sm mb-4"
               style={{ color: NHS_COLOURS.darkText }}
@@ -232,13 +282,26 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
               and review the readiness scores side by side, paying particular
               attention to the dimensions where cumulative demand is highest.
             </p>
+              </div>
+            </details>
 
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ color: NHS_COLOURS.darkBlue }}
+            <details
+              className="group rounded-md bg-white border mb-2"
+              style={{ borderColor: NHS_COLOURS.blue + "22" }}
             >
-              The worked examples
-            </h2>
+              <summary
+                className="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+                style={{ color: NHS_COLOURS.darkBlue }}
+              >
+                The worked examples
+                <span
+                  className="accordion-chevron ml-3 shrink-0"
+                  style={{ color: NHS_COLOURS.grey }}
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="px-4 pb-4">
             <p
               className="text-sm mb-3"
               style={{ color: NHS_COLOURS.darkText }}
@@ -259,6 +322,8 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
                 </li>
               ))}
             </ul>
+              </div>
+            </details>
 
             <div
               className="rounded-md px-4 py-3 mb-4"

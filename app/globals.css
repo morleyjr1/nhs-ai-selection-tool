@@ -28,3 +28,11 @@ html {
   outline: 3px solid #FFB81C;
   outline-offset: 2px;
 }
+
+/* Collapsible section chevron rotation */
+.accordion-chevron {
+  transition: transform 0.2s ease;
+}
+details[open] > summary .accordion-chevron {
+  transform: rotate(180deg);
+}
