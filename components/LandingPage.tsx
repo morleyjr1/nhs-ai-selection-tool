@@ -424,8 +424,14 @@ export default function LandingPage({ onStart, onResume }: LandingPageProps) {
             in collaboration with AI Centre for Value Based Healthcare. This is
             a prototype decision tool, designed to help NHS organisations make
             informed decisions about whether to adopt specific AI technologies;
-            it is being iterated and improved, and does not constitute official
-            policy or regulatory guidance.
+            it is being iterated and improved. Some of the explanatory content —
+            the worked examples and parts of the user guide — was drafted with
+            the help of AI, and all of it has been reviewed and checked by a
+            person before publication. The tool is designed to aid
+            decision-making, not to replace it: its outputs are a structured
+            prompt for discussion and professional judgement, not a binding or
+            authoritative determination, and do not constitute official policy
+            or regulatory guidance.
           </p>
         </div>
       </main>
